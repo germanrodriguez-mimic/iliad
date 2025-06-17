@@ -2,10 +2,18 @@ from datetime import datetime
 from typing import Optional, List
 from pydantic import BaseModel
 
+class EmbodimentInfo(BaseModel):
+    id: int
+    name: str
+
+class TeleopModeInfo(BaseModel):
+    id: int
+    name: str
+
 class RawEpisodeBase(BaseModel):
-    operator: str
-    url: str
-    label: str
+    operator: Optional[str] = None
+    url: Optional[str] = None
+    label: Optional[str] = None
     repository: Optional[str] = None
     git_commit: Optional[str] = None
     recorded_at: Optional[datetime] = None
@@ -14,9 +22,7 @@ class RawEpisodeCreate(RawEpisodeBase):
     pass
 
 class RawEpisodeUpdate(RawEpisodeBase):
-    operator: Optional[str] = None
-    url: Optional[str] = None
-    label: Optional[str] = None
+    pass
 
 class RawEpisode(RawEpisodeBase):
     id: int
@@ -39,9 +45,28 @@ class SubdatasetCreate(SubdatasetBase):
 class SubdatasetUpdate(SubdatasetBase):
     name: Optional[str] = None
 
-class Subdataset(SubdatasetBase):
+class SubdatasetList(SubdatasetBase):
     id: int
-    raw_episodes: List[RawEpisode] = []
+    embodiment: Optional[EmbodimentInfo] = None
+    teleop_mode: Optional[TeleopModeInfo] = None
 
     class Config:
-        from_attributes = True 
+        from_attributes = True
+
+class Subdataset(SubdatasetBase):
+    id: int
+    embodiment: Optional[EmbodimentInfo] = None
+    teleop_mode: Optional[TeleopModeInfo] = None
+    raw_episodes: List["RawEpisode"] = []
+    episode_stats: Optional["EpisodeStats"] = None
+
+    class Config:
+        from_attributes = True
+
+class EpisodeStats(BaseModel):
+    total: int
+    good: int
+    bad: int
+
+# Update forward references
+Subdataset.model_rebuild() 

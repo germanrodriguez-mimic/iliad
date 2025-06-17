@@ -44,4 +44,11 @@ class Task(TaskBase):
     variants: List[TaskVariant] = []
 
     class Config:
+        from_attributes = True
+
+class TaskList(TaskBase):
+    id: int
+    created_at: datetime
+
+    class Config:
         from_attributes = True 

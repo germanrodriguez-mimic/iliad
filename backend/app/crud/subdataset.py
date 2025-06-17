@@ -1,12 +1,16 @@
 from typing import List, Optional
 from sqlalchemy.orm import Session
-from sqlalchemy import and_
+from sqlalchemy import and_, func, case
+from sqlalchemy.orm import joinedload
 
 from app.models.subdataset import Subdataset
 from app.models.raw_episode import RawEpisode
+from app.models.embodiment import Embodiment
+from app.models.teleop_mode import TeleopMode
 from app.schemas.subdataset import (
     SubdatasetCreate, SubdatasetUpdate,
-    RawEpisodeCreate, RawEpisodeUpdate
+    RawEpisodeCreate, RawEpisodeUpdate,
+    EpisodeStats
 )
 
 # Subdataset CRUD operations
@@ -24,23 +28,44 @@ def create_subdataset(db: Session, subdataset: SubdatasetCreate) -> Subdataset:
     return db_subdataset
 
 def get_subdataset(db: Session, subdataset_id: int) -> Optional[Subdataset]:
-    return db.query(Subdataset).filter(Subdataset.id == subdataset_id).first()
+    subdataset = db.query(Subdataset)\
+        .options(
+            joinedload(Subdataset.embodiment),
+            joinedload(Subdataset.teleop_mode),
+            joinedload(Subdataset.raw_episodes)
+        )\
+        .filter(Subdataset.id == subdataset_id)\
+        .first()
+    
+    if subdataset:
+        # Calculate episode stats
+        stats = db.query(
+            func.count(RawEpisode.id).label('total'),
+            func.sum(case((RawEpisode.label == 'good', 1), else_=0)).label('good'),
+            func.sum(case((RawEpisode.label == 'bad', 1), else_=0)).label('bad')
+        ).filter(RawEpisode.subdataset_id == subdataset_id).first()
+        
+        subdataset.episode_stats = EpisodeStats(
+            total=stats.total or 0,
+            good=stats.good or 0,
+            bad=stats.bad or 0
+        )
+    
+    return subdataset
 
 def get_subdatasets(
     db: Session,
     skip: int = 0,
-    limit: int = 100,
-    embodiment_id: Optional[int] = None,
-    teleop_mode_id: Optional[int] = None
+    limit: int = 100
 ) -> List[Subdataset]:
-    query = db.query(Subdataset)
-    
-    if embodiment_id is not None:
-        query = query.filter(Subdataset.embodiment_id == embodiment_id)
-    if teleop_mode_id is not None:
-        query = query.filter(Subdataset.teleop_mode_id == teleop_mode_id)
-    
-    return query.offset(skip).limit(limit).all()
+    return db.query(Subdataset)\
+        .options(
+            joinedload(Subdataset.embodiment),
+            joinedload(Subdataset.teleop_mode)
+        )\
+        .offset(skip)\
+        .limit(limit)\
+        .all()
 
 def update_subdataset(
     db: Session,

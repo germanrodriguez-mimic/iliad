@@ -6,12 +6,30 @@ from app.db.session import get_db
 from app.crud import task as crud
 from app.schemas.task import (
     Task, TaskCreate, TaskUpdate,
-    TaskVariant, TaskVariantCreate, TaskVariantUpdate
+    TaskVariant, TaskVariantCreate, TaskVariantUpdate,
+    TaskList
 )
 
 router = APIRouter()
 
 # Task endpoints
+@router.get("/list", response_model=List[TaskList])
+def read_tasks_list(
+    skip: int = 0,
+    limit: int = 100,
+    status: Optional[str] = None,
+    is_external: Optional[bool] = None,
+    db: Session = Depends(get_db)
+):
+    tasks = crud.get_tasks(
+        db=db,
+        skip=skip,
+        limit=limit,
+        status=status,
+        is_external=is_external
+    )
+    return tasks
+
 @router.post("/", response_model=Task)
 def create_task(task: TaskCreate, db: Session = Depends(get_db)):
     return crud.create_task(db=db, task=task)

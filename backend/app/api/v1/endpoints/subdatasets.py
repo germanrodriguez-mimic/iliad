@@ -6,12 +6,25 @@ from app.db.session import get_db
 from app.crud import subdataset as crud
 from app.schemas.subdataset import (
     Subdataset, SubdatasetCreate, SubdatasetUpdate,
-    RawEpisode, RawEpisodeCreate, RawEpisodeUpdate
+    SubdatasetList, RawEpisode, RawEpisodeCreate, RawEpisodeUpdate
 )
 
 router = APIRouter()
 
 # Subdataset endpoints
+@router.get("/list", response_model=List[SubdatasetList])
+def read_subdatasets_list(
+    skip: int = 0,
+    limit: int = 100,
+    db: Session = Depends(get_db)
+):
+    subdatasets = crud.get_subdatasets(
+        db=db,
+        skip=skip,
+        limit=limit
+    )
+    return subdatasets
+
 @router.post("/", response_model=Subdataset)
 def create_subdataset(
     *,
