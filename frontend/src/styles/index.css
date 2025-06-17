@@ -1,0 +1,21 @@
+@import url('https://fonts.googleapis.com/css2?family=Space+Mono&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  body {
+    @apply bg-background text-white font-mono;
+  }
+}
+
+@layer components {
+  .nav-link {
+    @apply cursor-pointer hover:text-accent transition-colors;
+  }
+
+  .action-button {
+    @apply bg-surface border border-border text-white p-8 text-xl transition-all duration-300 text-center rounded-lg shadow-none hover:bg-accent hover:text-black hover:border-accent hover:shadow-[0_0_20px_#ff7a20];
+  }
+} 
