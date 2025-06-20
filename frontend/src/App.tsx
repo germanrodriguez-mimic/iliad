@@ -1,6 +1,7 @@
 import { Routes, Route, Link } from 'react-router-dom'
 import TasksPage from './pages/TasksPage'
 import SubdatasetsPage from './pages/SubdatasetsPage'
+import TaskDetailPage from './pages/TaskDetailPage'
 
 function App() {
   return (
@@ -24,6 +25,7 @@ function App() {
           } />
           <Route path="/tasks" element={<TasksPage />} />
           <Route path="/subdatasets" element={<SubdatasetsPage />} />
+          <Route path="/tasks/:taskId" element={<TaskDetailPage />} />
         </Routes>
       </main>
     </div>

@@ -7,7 +7,7 @@ from app.crud import task as crud
 from app.schemas.task import (
     Task, TaskCreate, TaskUpdate,
     TaskVariant, TaskVariantCreate, TaskVariantUpdate,
-    TaskList
+    TaskList, TaskDetailSummary
 )
 
 router = APIRouter()
@@ -123,4 +123,11 @@ def delete_task_variant(variant_id: int, db: Session = Depends(get_db)):
     success = crud.delete_task_variant(db=db, variant_id=variant_id)
     if not success:
         raise HTTPException(status_code=404, detail="Task variant not found")
-    return {"message": "Task variant deleted successfully"} 
+    return {"message": "Task variant deleted successfully"}
+
+@router.get("/{task_id}/detail", response_model=TaskDetailSummary)
+def read_task_detail(task_id: int, db: Session = Depends(get_db)):
+    summary = crud.get_task_detail_summary(db=db, task_id=task_id)
+    if summary is None:
+        raise HTTPException(status_code=404, detail="Task not found")
+    return summary 

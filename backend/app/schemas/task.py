@@ -1,6 +1,9 @@
 from datetime import datetime
 from typing import Optional, List
 from pydantic import BaseModel
+from app.schemas.subdataset import SubdatasetList
+from app.schemas.training_run import TrainingRunSummary
+from app.schemas.evaluation import EvaluationSummary
 
 class TaskVariantBase(BaseModel):
     name: str
@@ -49,6 +52,17 @@ class Task(TaskBase):
 class TaskList(TaskBase):
     id: int
     created_at: datetime
+
+    class Config:
+        from_attributes = True
+
+class TaskDetailSummary(TaskBase):
+    id: int
+    created_at: datetime
+    variants: List[TaskVariant] = []
+    subdatasets: List[SubdatasetList] = []
+    training_runs: List[TrainingRunSummary] = []
+    evaluations: List[EvaluationSummary] = []
 
     class Config:
         from_attributes = True 

@@ -4,6 +4,9 @@ from app.models.subdataset import Subdataset
 from app.models.raw_episode import RawEpisode
 from app.models.embodiment import Embodiment
 from app.models.teleop_mode import TeleopMode
+from app.models.training_run import TrainingRun, TrainingRunsToTasks
+from app.models.evaluation import Evaluation
+from app.models.tasks_to_subdatasets import TasksToSubdatasets
 
 __all__ = [
     "Task",
@@ -11,5 +14,9 @@ __all__ = [
     "Subdataset",
     "RawEpisode",
     "Embodiment",
-    "TeleopMode"
+    "TeleopMode",
+    "TrainingRun",
+    "TrainingRunsToTasks",
+    "Evaluation",
+    "TasksToSubdatasets"
 ] 

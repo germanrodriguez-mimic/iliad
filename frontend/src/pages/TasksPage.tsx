@@ -1,6 +1,7 @@
-import React, { useState } from 'react'
+import React, { useState, useEffect, useRef } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import axios from 'axios'
+import { Link } from 'react-router-dom'
 
 interface TaskList {
   id: number
@@ -35,6 +36,52 @@ function TasksPage() {
   const [expandedTaskId, setExpandedTaskId] = useState<number | null>(null)
   const [expandedVariantId, setExpandedVariantId] = useState<number | null>(null)
 
+  // Task status columns for kanban
+  const TASK_STATUSES = [
+    'created',
+    'collecting data',
+    'ready for training',
+    'training',
+    'evaluating',
+    'done',
+    'discarded',
+  ]
+
+  // State for visible columns
+  const [visibleStatuses, setVisibleStatuses] = useState<string[]>(() => {
+    const stored = localStorage.getItem('kanban_visible_statuses')
+    return stored ? JSON.parse(stored) : [...TASK_STATUSES]
+  })
+
+  // Persist visibleStatuses to localStorage
+  useEffect(() => {
+    localStorage.setItem('kanban_visible_statuses', JSON.stringify(visibleStatuses))
+  }, [visibleStatuses])
+
+  // State for search box
+  const [search, setSearch] = useState('')
+
+  // State for dropdown
+  const [dropdownOpen, setDropdownOpen] = useState(false)
+  const dropdownRef = useRef<HTMLDivElement>(null)
+
+  // Close dropdown when clicking outside
+  useEffect(() => {
+    function handleClickOutside(event: MouseEvent) {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+        setDropdownOpen(false)
+      }
+    }
+    if (dropdownOpen) {
+      document.addEventListener('mousedown', handleClickOutside)
+    } else {
+      document.removeEventListener('mousedown', handleClickOutside)
+    }
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside)
+    }
+  }, [dropdownOpen])
+
   // Query for task list
   const { data: tasks, isLoading } = useQuery<TaskList[]>({
     queryKey: ['tasks-list'],
@@ -55,6 +102,26 @@ function TasksPage() {
     enabled: !!expandedTaskId
   })
 
+  // Filter tasks by search string (case-insensitive)
+  const filteredTasks = search.trim() === ''
+    ? tasks
+    : tasks?.filter(task => task.name.toLowerCase().includes(search.trim().toLowerCase()))
+
+  // Group filtered tasks by status
+  const tasksByStatus: { [status: string]: TaskList[] } = {}
+  TASK_STATUSES.forEach(status => {
+    tasksByStatus[status] = filteredTasks?.filter(task => task.status === status) || []
+  })
+
+  // Handle filter checkbox change
+  const handleStatusToggle = (status: string) => {
+    setVisibleStatuses((prev) =>
+      prev.includes(status)
+        ? prev.filter((s) => s !== status)
+        : [...prev, status]
+    )
+  }
+
   if (isLoading) {
     return (
       <div className="flex justify-center items-center min-h-screen">
@@ -64,8 +131,8 @@ function TasksPage() {
   }
 
   return (
-    <div className="max-w-4xl mx-auto">
-      <div className="flex justify-between items-center mb-8">
+    <div className="max-w-full mx-auto">
+      <div className="flex justify-between items-center mb-8 px-4">
         <h1 className="text-3xl">Tasks</h1>
         <div className="space-x-4">
           <button className="action-button py-2 px-4">Add New Task</button>
@@ -73,122 +140,168 @@ function TasksPage() {
         </div>
       </div>
 
-      <div className="space-y-4">
-        <div className="flex justify-between items-center px-6 text-sm text-gray-400">
-          <span>tasks</span>
-          <span>status</span>
+      {/* Search and Filter UI */}
+      <div className="flex flex-wrap gap-4 mb-6 px-4 items-center relative">
+        <input
+          type="text"
+          value={search}
+          onChange={e => setSearch(e.target.value)}
+          placeholder="Search tasks..."
+          className="border border-border rounded px-3 py-1 text-sm bg-background text-white focus:outline-none focus:ring-2 focus:ring-accent"
+          style={{ minWidth: 220 }}
+        />
+        <div className="relative" ref={dropdownRef}>
+          <button
+            type="button"
+            className="action-button py-1.5 px-4 text-sm font-semibold"
+            onClick={() => setDropdownOpen((open) => !open)}
+          >
+            Show columns
+          </button>
+          {dropdownOpen && (
+            <div className="absolute left-0 mt-2 z-20 bg-surface border border-border rounded shadow-lg p-3 min-w-[200px] flex flex-col gap-2">
+              {TASK_STATUSES.map((status) => (
+                <label key={status} className="flex items-center gap-2 text-xs cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={visibleStatuses.includes(status)}
+                    onChange={() => handleStatusToggle(status)}
+                    className="accent-accent"
+                  />
+                  <span className="capitalize">{status}</span>
+                </label>
+              ))}
+            </div>
+          )}
         </div>
+      </div>
 
-        {tasks?.map((task) => (
-          <div key={task.id} className="bg-surface rounded-lg overflow-hidden">
-            <button
-              onClick={() => setExpandedTaskId(expandedTaskId === task.id ? null : task.id)}
-              className="w-full px-6 py-4 flex justify-between items-center hover:bg-accent hover:text-black transition-colors"
-            >
-              <span className="text-xl">{task.name}</span>
-              <div className="flex items-center gap-4">
-                <span className="text-sm px-2 py-1 rounded bg-background text-white">{task.status}</span>
-                {task.is_external && (
-                  <span className="text-sm px-2 py-1 rounded bg-background text-white">External</span>
+      {/* Kanban board */}
+      <div className="overflow-x-auto pb-4">
+        <div className="flex flex-row gap-6 min-w-max">
+          {TASK_STATUSES.filter((status) => visibleStatuses.includes(status)).map((status) => (
+            <div key={status} className="flex-shrink-0 w-80 bg-surface rounded-lg p-4 border border-border min-h-[70vh] flex flex-col">
+              <div className="font-bold text-lg mb-4 capitalize text-center text-accent">{status}</div>
+              <div className="flex-1 space-y-4">
+                {tasksByStatus[status].length === 0 && (
+                  <div className="text-gray-500 text-center">No tasks</div>
                 )}
-              </div>
-            </button>
-
-            {expandedTaskId === task.id && (
-              <div className="px-6 py-4 border-t border-border">
-                {expandedTask ? (
-                  <div className="space-y-4">
-                    <div>
-                      <h3 className="text-lg font-bold mb-2">Description</h3>
-                      <p className="text-gray-300">{expandedTask.description}</p>
-                    </div>
-
-                    <div>
-                      <h3 className="text-lg font-bold mb-2">Task Variants</h3>
-                      <div className="space-y-4">
-                        {expandedTask.variants?.map((variant) => (
-                          <div key={variant.id} className="bg-background rounded overflow-hidden">
-                            <button
-                              onClick={() => setExpandedVariantId(expandedVariantId === variant.id ? null : variant.id)}
-                              className="w-full px-4 py-3 flex justify-between items-center hover:bg-accent hover:text-black transition-colors"
-                            >
-                              <span className="font-bold">{variant.name}</span>
-                              <span className="text-sm">Click to expand</span>
-                            </button>
-
-                            {expandedVariantId === variant.id && (
-                              <div className="px-4 py-3 border-t border-border space-y-3">
-                                <div>
-                                  <span className="font-bold">Description: </span>
-                                  <p className="text-gray-300 mt-1">{variant.description}</p>
-                                </div>
-
-                                {variant.items && (
-                                  <div>
-                                    <span className="font-bold">Items: </span>
-                                    <p className="text-gray-300 mt-1">{variant.items}</p>
-                                  </div>
-                                )}
-
-                                {variant.embodiment_id && (
-                                  <div>
-                                    <span className="font-bold">Embodiment ID: </span>
-                                    <span className="text-gray-300">{variant.embodiment_id}</span>
-                                  </div>
-                                )}
-
-                                {variant.teleop_mode_id && (
-                                  <div>
-                                    <span className="font-bold">Teleop Mode ID: </span>
-                                    <span className="text-gray-300">{variant.teleop_mode_id}</span>
-                                  </div>
-                                )}
-
-                                {variant.notes && (
-                                  <div>
-                                    <span className="font-bold">Notes: </span>
-                                    <p className="text-gray-300 mt-1">{variant.notes}</p>
-                                  </div>
-                                )}
-
-                                {variant.media && variant.media.length > 0 && (
-                                  <div>
-                                    <span className="font-bold">Media: </span>
-                                    <div className="flex flex-wrap gap-2 mt-1">
-                                      {variant.media.map((url, index) => (
-                                        <a
-                                          key={index}
-                                          href={url}
-                                          target="_blank"
-                                          rel="noopener noreferrer"
-                                          className="text-accent hover:underline"
-                                        >
-                                          Link {index + 1}
-                                        </a>
-                                      ))}
-                                    </div>
-                                  </div>
-                                )}
-                              </div>
-                            )}
-                          </div>
-                        ))}
+                {tasksByStatus[status].map((task) => (
+                  <div key={task.id} className="bg-background rounded-lg overflow-hidden shadow">
+                    <button
+                      onClick={() => setExpandedTaskId(expandedTaskId === task.id ? null : task.id)}
+                      className="w-full px-4 py-3 flex justify-between items-center hover:bg-accent hover:text-black transition-colors"
+                    >
+                      <span className="text-lg font-semibold text-left">{task.name}</span>
+                      <div className="flex items-center gap-2">
+                        {task.is_external && (
+                          <span className="text-xs px-2 py-1 rounded bg-background text-white border border-accent">External</span>
+                        )}
                       </div>
+                    </button>
+                    <div className="px-4 pb-2">
+                      <Link to={`/tasks/${task.id}`} className="text-accent hover:underline text-xs">View Details &rarr;</Link>
                     </div>
 
-                    <div className="text-sm text-gray-400">
-                      Created: {new Date(expandedTask.created_at).toLocaleDateString()}
-                    </div>
+                    {expandedTaskId === task.id && (
+                      <div className="px-4 py-3 border-t border-border bg-surface">
+                        {expandedTask ? (
+                          <div className="space-y-4">
+                            <div>
+                              <h3 className="text-base font-bold mb-1">Description</h3>
+                              <p className="text-gray-300 text-sm">{expandedTask.description}</p>
+                            </div>
+
+                            <div>
+                              <h3 className="text-base font-bold mb-1">Task Variants</h3>
+                              <div className="space-y-3">
+                                {expandedTask.variants?.map((variant) => (
+                                  <div key={variant.id} className="bg-background rounded overflow-hidden">
+                                    <button
+                                      onClick={() => setExpandedVariantId(expandedVariantId === variant.id ? null : variant.id)}
+                                      className="w-full px-3 py-2 flex justify-between items-center hover:bg-accent hover:text-black transition-colors"
+                                    >
+                                      <span className="font-bold text-sm">{variant.name}</span>
+                                      <span className="text-xs">Click to expand</span>
+                                    </button>
+
+                                    {expandedVariantId === variant.id && (
+                                      <div className="px-3 py-2 border-t border-border space-y-2">
+                                        <div>
+                                          <span className="font-bold">Description: </span>
+                                          <p className="text-gray-300 mt-1 text-xs">{variant.description}</p>
+                                        </div>
+
+                                        {variant.items && (
+                                          <div>
+                                            <span className="font-bold">Items: </span>
+                                            <p className="text-gray-300 mt-1 text-xs">{variant.items}</p>
+                                          </div>
+                                        )}
+
+                                        {variant.embodiment_id && (
+                                          <div>
+                                            <span className="font-bold">Embodiment ID: </span>
+                                            <span className="text-gray-300 text-xs">{variant.embodiment_id}</span>
+                                          </div>
+                                        )}
+
+                                        {variant.teleop_mode_id && (
+                                          <div>
+                                            <span className="font-bold">Teleop Mode ID: </span>
+                                            <span className="text-gray-300 text-xs">{variant.teleop_mode_id}</span>
+                                          </div>
+                                        )}
+
+                                        {variant.notes && (
+                                          <div>
+                                            <span className="font-bold">Notes: </span>
+                                            <p className="text-gray-300 mt-1 text-xs">{variant.notes}</p>
+                                          </div>
+                                        )}
+
+                                        {variant.media && variant.media.length > 0 && (
+                                          <div>
+                                            <span className="font-bold">Media: </span>
+                                            <div className="flex flex-wrap gap-2 mt-1">
+                                              {variant.media.map((url, index) => (
+                                                <a
+                                                  key={index}
+                                                  href={url}
+                                                  target="_blank"
+                                                  rel="noopener noreferrer"
+                                                  className="text-accent hover:underline text-xs"
+                                                >
+                                                  Link {index + 1}
+                                                </a>
+                                              ))}
+                                            </div>
+                                          </div>
+                                        )}
+                                      </div>
+                                    )}
+                                  </div>
+                                ))}
+                              </div>
+                            </div>
+
+                            <div className="text-xs text-gray-400">
+                              Created: {new Date(expandedTask.created_at).toLocaleDateString()}
+                            </div>
+                          </div>
+                        ) : (
+                          <div className="flex justify-center py-2">
+                            <div className="text-gray-400 text-xs">Loading task details...</div>
+                          </div>
+                        )}
+                      </div>
+                    )}
                   </div>
-                ) : (
-                  <div className="flex justify-center py-4">
-                    <div className="text-gray-400">Loading task details...</div>
-                  </div>
-                )}
+                ))}
               </div>
-            )}
-          </div>
-        ))}
+            </div>
+          ))}
+        </div>
       </div>
     </div>
   )

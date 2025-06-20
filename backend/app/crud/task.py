@@ -4,7 +4,14 @@ from sqlalchemy import and_
 
 from app.models.task import Task
 from app.models.task_variant import TaskVariant
-from app.schemas.task import TaskCreate, TaskUpdate, TaskVariantCreate, TaskVariantUpdate
+from app.schemas.task import TaskCreate, TaskUpdate, TaskVariantCreate, TaskVariantUpdate, TaskDetailSummary
+from app.models.tasks_to_subdatasets import TasksToSubdatasets
+from app.models.subdataset import Subdataset
+from app.models.training_run import TrainingRun, TrainingRunsToTasks
+from app.models.evaluation import Evaluation
+from app.schemas.subdataset import SubdatasetList, EmbodimentInfo, TeleopModeInfo
+from app.schemas.training_run import TrainingRunSummary
+from app.schemas.evaluation import EvaluationSummary
 
 # Task CRUD operations
 def create_task(db: Session, task: TaskCreate) -> Task:
@@ -116,4 +123,50 @@ def delete_task_variant(db: Session, variant_id: int) -> bool:
     
     db.delete(db_variant)
     db.commit()
-    return True 
+    return True
+
+def get_task_detail_summary(db: Session, task_id: int) -> TaskDetailSummary:
+    # Get the task
+    task = db.query(Task).filter(Task.id == task_id).first()
+    if not task:
+        return None
+
+    # Get variants
+    variants = db.query(TaskVariant).filter(TaskVariant.task_id == task_id).all()
+
+    # Get subdatasets via junction table
+    subdataset_links = db.query(TasksToSubdatasets).filter(TasksToSubdatasets.task_id == task_id).all()
+    subdataset_ids = [link.subdataset_id for link in subdataset_links]
+    subdatasets = db.query(Subdataset).filter(Subdataset.id.in_(subdataset_ids)).all() if subdataset_ids else []
+
+    # Get training runs via junction table
+    tr_links = db.query(TrainingRunsToTasks).filter(TrainingRunsToTasks.task_id == task_id).all()
+    tr_ids = [link.training_run_id for link in tr_links]
+    training_runs = db.query(TrainingRun).filter(TrainingRun.id.in_(tr_ids)).all() if tr_ids else []
+
+    # Get evaluations
+    evaluations = db.query(Evaluation).filter(Evaluation.task_id == task_id).all()
+
+    # Build summary
+    def orm_to_dict(obj):
+        return {k: v for k, v in obj.__dict__.items() if not k.startswith('_sa_')}
+
+    def subdataset_to_summary(sd):
+        return SubdatasetList.model_validate({
+            **sd.__dict__,
+            "embodiment": EmbodimentInfo.model_validate(orm_to_dict(sd.embodiment)) if sd.embodiment else None,
+            "teleop_mode": TeleopModeInfo.model_validate(orm_to_dict(sd.teleop_mode)) if sd.teleop_mode else None,
+        })
+
+    return TaskDetailSummary(
+        id=task.id,
+        name=task.name,
+        description=task.description,
+        status=task.status,
+        created_at=task.created_at,
+        is_external=task.is_external,
+        variants=variants,
+        subdatasets=[subdataset_to_summary(sd) for sd in subdatasets],
+        training_runs=[TrainingRunSummary.model_validate(tr) for tr in training_runs],
+        evaluations=[EvaluationSummary.model_validate(ev) for ev in evaluations],
+    ) 
