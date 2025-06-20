@@ -80,11 +80,11 @@ const SubdatasetDetailPage: React.FC = () => {
     enabled: !!subdatasetId
   })
 
-  // Fetch raw episodes
+  // Fetch raw episodes (for both display and processed episode stats)
   const { data: rawEpisodes, isLoading: loadingRawEpisodes } = useQuery<RawEpisode[]>({
     queryKey: ['subdataset-raw-episodes', subdatasetId],
     queryFn: async () => {
-      const response = await axios.get(`http://localhost:8000/api/v1/subdatasets/${subdatasetId}/episodes/`)
+      const response = await axios.get(`http://localhost:8000/api/v1/subdatasets/${subdatasetId}/episodes/?limit=10000`)
       return response.data
     },
     enabled: !!subdatasetId
@@ -94,11 +94,36 @@ const SubdatasetDetailPage: React.FC = () => {
   const { data: processedEpisodes, isLoading: loadingProcessedEpisodes } = useQuery<ProcessedEpisode[]>({
     queryKey: ['subdataset-processed-episodes', subdatasetId],
     queryFn: async () => {
-      const response = await axios.get(`http://localhost:8000/api/v1/subdatasets/${subdatasetId}/processed_episodes/`)
+      const response = await axios.get(`http://localhost:8000/api/v1/subdatasets/${subdatasetId}/processed_episodes/?limit=10000`)
       return response.data
     },
     enabled: !!subdatasetId
   })
+
+  // Compute raw episode stats
+  const rawStats = React.useMemo(() => {
+    if (!rawEpisodes) return { total: 0, good: 0, bad: 0 }
+    let good = 0, bad = 0
+    for (const ep of rawEpisodes) {
+      if (ep.label === 'good') good++
+      if (ep.label === 'bad') bad++
+    }
+    return { total: rawEpisodes.length, good, bad }
+  }, [rawEpisodes])
+
+  // Compute processed episode stats using raw episode labels
+  const processedStats = React.useMemo(() => {
+    if (!processedEpisodes || !rawEpisodes) return { total: 0, good: 0, bad: 0 }
+    let good = 0, bad = 0
+    const rawMap = new Map<number, RawEpisode>()
+    for (const ep of rawEpisodes) rawMap.set(ep.id, ep)
+    for (const ep of processedEpisodes) {
+      const raw = rawMap.get(ep.raw_episode_id)
+      if (raw?.label === 'good') good++
+      if (raw?.label === 'bad') bad++
+    }
+    return { total: processedEpisodes.length, good, bad }
+  }, [processedEpisodes, rawEpisodes])
 
   if (loadingSubdataset) {
     return <div className="flex justify-center items-center min-h-screen">Loading subdataset...</div>
@@ -170,23 +195,30 @@ const SubdatasetDetailPage: React.FC = () => {
           <span className="ml-2 text-xs">{showRawEpisodes ? '▲' : '▼'}</span>
         </button>
         {showRawEpisodes && (
-          loadingRawEpisodes ? <div className="text-gray-400">Loading raw episodes...</div> : (
-            rawEpisodes && rawEpisodes.length > 0 ? (
-              <ul className="space-y-2 max-h-80 overflow-y-auto pr-2">
-                {rawEpisodes.map(ep => (
-                  <li key={ep.id} className="border border-border rounded p-3 bg-background">
-                    <div className="flex flex-wrap gap-4 text-xs">
-                      <div><span className="font-bold">Operator:</span> {ep.operator || 'N/A'}</div>
-                      <div><span className="font-bold">Label:</span> {ep.label || 'N/A'}</div>
-                      <div><span className="font-bold">Recorded At:</span> {ep.recorded_at ? new Date(ep.recorded_at).toLocaleString() : 'N/A'}</div>
-                      <div><span className="font-bold">Uploaded At:</span> {new Date(ep.uploaded_at).toLocaleString()}</div>
-                    </div>
-                    {ep.url && <div className="mt-2"><a href={ep.url} target="_blank" rel="noopener noreferrer" className="text-accent hover:underline">View Episode</a></div>}
-                  </li>
-                ))}
-              </ul>
-            ) : <div className="text-gray-400">No raw episodes.</div>
-          )
+          <>
+            <div className="mb-2 text-sm text-gray-400">
+              <span className="mr-4">Total: {rawStats.total}</span>
+              <span className="mr-4">Good: {rawStats.good}</span>
+              <span>Bad: {rawStats.bad}</span>
+            </div>
+            {loadingRawEpisodes ? <div className="text-gray-400">Loading raw episodes...</div> : (
+              rawEpisodes && rawEpisodes.length > 0 ? (
+                <ul className="space-y-2 max-h-80 overflow-y-auto pr-2">
+                  {rawEpisodes.map(ep => (
+                    <li key={ep.id} className="border border-border rounded p-3 bg-background">
+                      <div className="flex flex-wrap gap-4 text-xs">
+                        <div><span className="font-bold">Operator:</span> {ep.operator || 'N/A'}</div>
+                        <div><span className="font-bold">Label:</span> {ep.label || 'N/A'}</div>
+                        <div><span className="font-bold">Recorded At:</span> {ep.recorded_at ? new Date(ep.recorded_at).toLocaleString() : 'N/A'}</div>
+                        <div><span className="font-bold">Uploaded At:</span> {new Date(ep.uploaded_at).toLocaleString()}</div>
+                      </div>
+                      {ep.url && <div className="mt-2"><a href={ep.url} target="_blank" rel="noopener noreferrer" className="text-accent hover:underline">View Episode</a></div>}
+                    </li>
+                  ))}
+                </ul>
+              ) : <div className="text-gray-400">No raw episodes.</div>
+            )}
+          </>
         )}
       </section>
 
@@ -200,22 +232,33 @@ const SubdatasetDetailPage: React.FC = () => {
           <span className="ml-2 text-xs">{showProcessedEpisodes ? '▲' : '▼'}</span>
         </button>
         {showProcessedEpisodes && (
-          loadingProcessedEpisodes ? <div className="text-gray-400">Loading processed episodes...</div> : (
-            processedEpisodes && processedEpisodes.length > 0 ? (
-              <ul className="space-y-2 max-h-80 overflow-y-auto pr-2">
-                {processedEpisodes.map(ep => (
-                  <li key={ep.id} className="border border-border rounded p-3 bg-background">
-                    <div className="flex flex-wrap gap-4 text-xs">
-                      <div><span className="font-bold">Raw Episode ID:</span> {ep.raw_episode_id}</div>
-                      <div><span className="font-bold">Conversion Version ID:</span> {ep.conversion_version_id}</div>
-                      <div><span className="font-bold">Uploaded At:</span> {ep.uploaded_at ? new Date(ep.uploaded_at).toLocaleString() : 'N/A'}</div>
-                    </div>
-                    {ep.url && <div className="mt-2"><a href={ep.url} target="_blank" rel="noopener noreferrer" className="text-accent hover:underline">View Processed Episode</a></div>}
-                  </li>
-                ))}
-              </ul>
-            ) : <div className="text-gray-400">No processed episodes.</div>
-          )
+          <>
+            <div className="mb-2 text-sm text-gray-400">
+              <span className="mr-4">Total: {processedStats.total}</span>
+              <span className="mr-4">Good: {processedStats.good}</span>
+              <span>Bad: {processedStats.bad}</span>
+            </div>
+            {loadingProcessedEpisodes ? <div className="text-gray-400">Loading processed episodes...</div> : (
+              processedEpisodes && processedEpisodes.length > 0 ? (
+                <ul className="space-y-2 max-h-80 overflow-y-auto pr-2">
+                  {processedEpisodes.map(ep => (
+                    <li key={ep.id} className="border border-border rounded p-3 bg-background">
+                      <div className="flex flex-wrap gap-4 text-xs">
+                        <div><span className="font-bold">Raw Episode ID:</span> {ep.raw_episode_id}</div>
+                        <div><span className="font-bold">Conversion Version ID:</span> {ep.conversion_version_id}</div>
+                        <div><span className="font-bold">Uploaded At:</span> {ep.uploaded_at ? new Date(ep.uploaded_at).toLocaleString() : 'N/A'}</div>
+                        {/* Optionally show label from raw episode */}
+                        {rawEpisodes && (
+                          <div><span className="font-bold">Label:</span> {rawEpisodes.find(r => r.id === ep.raw_episode_id)?.label || 'N/A'}</div>
+                        )}
+                      </div>
+                      {ep.url && <div className="mt-2"><a href={ep.url} target="_blank" rel="noopener noreferrer" className="text-accent hover:underline">View Processed Episode</a></div>}
+                    </li>
+                  ))}
+                </ul>
+              ) : <div className="text-gray-400">No processed episodes.</div>
+            )}
+          </>
         )}
       </section>
     </div>
