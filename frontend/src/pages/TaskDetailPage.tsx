@@ -1,5 +1,5 @@
 import React, { useState } from 'react'
-import { useParams, Link } from 'react-router-dom'
+import { useParams, Link, useNavigate } from 'react-router-dom'
 import { useQuery } from '@tanstack/react-query'
 import axios from 'axios'
 
@@ -56,6 +56,7 @@ interface TaskDetailSummary {
 const TaskDetailPage: React.FC = () => {
   const { taskId } = useParams<{ taskId: string }>()
   const [expandedVariantId, setExpandedVariantId] = useState<number | null>(null)
+  const navigate = useNavigate()
 
   const { data, isLoading, error } = useQuery<TaskDetailSummary>({
     queryKey: ['task-detail', taskId],
@@ -75,7 +76,15 @@ const TaskDetailPage: React.FC = () => {
 
   return (
     <div className="max-w-4xl mx-auto bg-surface rounded-lg shadow p-8">
-      <Link to="/tasks" className="text-accent hover:underline">&larr; Back to Tasks</Link>
+      <div className="flex justify-between items-center mb-2">
+        <Link to="/tasks" className="text-accent hover:underline">&larr; Back to Tasks</Link>
+        <Link
+          to={`/tasks/${data.id}/edit`}
+          className="action-button py-1 px-4 text-xs"
+        >
+          Edit Task
+        </Link>
+      </div>
       <h1 className="text-3xl font-bold mt-2 mb-4">{data.name}</h1>
       <div className="mb-4 text-gray-400 text-sm">Status: <span className="capitalize">{data.status}</span> | Created: {new Date(data.created_at).toLocaleString()}</div>
       {data.is_external && <div className="mb-4 text-xs px-2 py-1 rounded bg-background text-white border border-accent inline-block">External</div>}

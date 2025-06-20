@@ -4,10 +4,13 @@ from sqlalchemy.orm import Session
 
 from app.db.session import get_db
 from app.crud import subdataset as crud
+from app.crud import episode as episode_crud
 from app.schemas.subdataset import (
     Subdataset, SubdatasetCreate, SubdatasetUpdate,
     SubdatasetList, RawEpisode, RawEpisodeCreate, RawEpisodeUpdate
 )
+from app.schemas.episode import Episode
+from app.schemas.task import Task
 
 router = APIRouter()
 
@@ -208,4 +211,28 @@ def delete_raw_episode(
     raw_episode = crud.get_raw_episode(db=db, raw_episode_id=episode_id)
     if not raw_episode or raw_episode.subdataset_id != subdataset_id:
         raise HTTPException(status_code=404, detail="Raw episode not found")
-    return crud.delete_raw_episode(db=db, raw_episode_id=episode_id) 
+    return crud.delete_raw_episode(db=db, raw_episode_id=episode_id)
+
+@router.get("/{subdataset_id}/processed_episodes/", response_model=List[Episode])
+def read_processed_episodes(
+    *,
+    db: Session = Depends(get_db),
+    subdataset_id: int,
+    skip: int = 0,
+    limit: int = 100
+) -> List[Episode]:
+    """
+    Retrieve processed episodes for a subdataset.
+    """
+    return episode_crud.get_episodes_by_subdataset(db=db, subdataset_id=subdataset_id, skip=skip, limit=limit)
+
+@router.get("/{subdataset_id}/linked_tasks/", response_model=List[Task])
+def read_linked_tasks(
+    *,
+    db: Session = Depends(get_db),
+    subdataset_id: int
+) -> List[Task]:
+    """
+    Retrieve all tasks (and their variants) linked to a subdataset.
+    """
+    return crud.get_tasks_and_variants_by_subdataset(db=db, subdataset_id=subdataset_id) 

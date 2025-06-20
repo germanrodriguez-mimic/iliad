@@ -188,19 +188,32 @@ function TasksPage() {
                 )}
                 {tasksByStatus[status].map((task) => (
                   <div key={task.id} className="bg-background rounded-lg overflow-hidden shadow">
-                    <button
-                      onClick={() => setExpandedTaskId(expandedTaskId === task.id ? null : task.id)}
-                      className="w-full px-4 py-3 flex justify-between items-center hover:bg-accent hover:text-black transition-colors"
-                    >
-                      <span className="text-lg font-semibold text-left">{task.name}</span>
+                    <div className="w-full px-4 py-3 flex justify-between items-center hover:bg-accent hover:text-black transition-colors">
+                      <span
+                        className="text-lg font-semibold text-left cursor-pointer hover:text-accent"
+                        onClick={() => setExpandedTaskId(expandedTaskId === task.id ? null : task.id)}
+                      >
+                        {task.name}
+                      </span>
                       <div className="flex items-center gap-2">
                         {task.is_external && (
                           <span className="text-xs px-2 py-1 rounded bg-background text-white border border-accent">External</span>
                         )}
                       </div>
-                    </button>
-                    <div className="px-4 pb-2">
-                      <Link to={`/tasks/${task.id}`} className="text-accent hover:underline text-xs">View Details &rarr;</Link>
+                    </div>
+                    <div className="px-4 pb-2 flex gap-2">
+                      <Link
+                        to={`/tasks/${task.id}`}
+                        className="action-button py-1 px-3 text-xs"
+                      >
+                        Full View
+                      </Link>
+                      <Link
+                        to={`/tasks/${task.id}/edit`}
+                        className="action-button py-1 px-3 text-xs"
+                      >
+                        Edit
+                      </Link>
                     </div>
 
                     {expandedTaskId === task.id && (
@@ -222,7 +235,6 @@ function TasksPage() {
                                       className="w-full px-3 py-2 flex justify-between items-center hover:bg-accent hover:text-black transition-colors"
                                     >
                                       <span className="font-bold text-sm">{variant.name}</span>
-                                      <span className="text-xs">Click to expand</span>
                                     </button>
 
                                     {expandedVariantId === variant.id && (

@@ -12,6 +12,9 @@ from app.schemas.subdataset import (
     RawEpisodeCreate, RawEpisodeUpdate,
     EpisodeStats
 )
+from app.models.tasks_to_subdatasets import TasksToSubdatasets
+from app.models.task import Task
+from app.models.task_variant import TaskVariant
 
 # Subdataset CRUD operations
 def create_subdataset(db: Session, subdataset: SubdatasetCreate) -> Subdataset:
@@ -170,4 +173,16 @@ def delete_raw_episode(db: Session, raw_episode_id: int) -> bool:
     
     db.delete(db_raw_episode)
     db.commit()
-    return True 
+    return True
+
+def get_tasks_and_variants_by_subdataset(db: Session, subdataset_id: int):
+    # Get all task links for this subdataset
+    links = db.query(TasksToSubdatasets).filter(TasksToSubdatasets.subdataset_id == subdataset_id).all()
+    task_ids = [link.task_id for link in links]
+    if not task_ids:
+        return []
+    tasks = db.query(Task).filter(Task.id.in_(task_ids)).all()
+    # Attach variants to each task
+    for task in tasks:
+        task.variants = db.query(TaskVariant).filter(TaskVariant.task_id == task.id).all()
+    return tasks 

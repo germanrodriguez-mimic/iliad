@@ -7,6 +7,7 @@ from app.models.teleop_mode import TeleopMode
 from app.models.training_run import TrainingRun, TrainingRunsToTasks
 from app.models.evaluation import Evaluation
 from app.models.tasks_to_subdatasets import TasksToSubdatasets
+from app.models.episode import Episode
 
 __all__ = [
     "Task",
@@ -18,5 +19,6 @@ __all__ = [
     "TrainingRun",
     "TrainingRunsToTasks",
     "Evaluation",
-    "TasksToSubdatasets"
+    "TasksToSubdatasets",
+    "Episode"
 ] 
