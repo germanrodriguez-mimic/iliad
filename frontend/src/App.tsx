@@ -3,6 +3,8 @@ import TasksPage from './pages/TasksPage'
 import SubdatasetsPage from './pages/SubdatasetsPage'
 import TaskDetailPage from './pages/TaskDetailPage'
 import TaskEditPage from './pages/TaskEditPage'
+import TaskCreatePage from './pages/TaskCreatePage'
+import TaskVariantCreatePage from './pages/TaskVariantCreatePage'
 import SubdatasetDetailPage from './pages/SubdatasetDetailPage'
 
 function App() {
@@ -26,6 +28,8 @@ function App() {
             </div>
           } />
           <Route path="/tasks" element={<TasksPage />} />
+          <Route path="/tasks/create" element={<TaskCreatePage />} />
+          <Route path="/tasks/variants/create" element={<TaskVariantCreatePage />} />
           <Route path="/subdatasets" element={<SubdatasetsPage />} />
           <Route path="/tasks/:taskId" element={<TaskDetailPage />} />
           <Route path="/tasks/:taskId/edit" element={<TaskEditPage />} />
