@@ -1,7 +1,7 @@
 from datetime import datetime
 from typing import Optional, List
 from pydantic import BaseModel
-from app.schemas.subdataset import SubdatasetList
+from app.schemas.subdataset import SubdatasetList, EmbodimentInfo, TeleopModeInfo
 from app.schemas.training_run import TrainingRunSummary
 from app.schemas.evaluation import EvaluationSummary
 
@@ -23,6 +23,8 @@ class TaskVariantUpdate(TaskVariantBase):
 class TaskVariant(TaskVariantBase):
     id: int
     task_id: int
+    embodiment: Optional[EmbodimentInfo] = None
+    teleop_mode: Optional[TeleopModeInfo] = None
 
     class Config:
         from_attributes = True

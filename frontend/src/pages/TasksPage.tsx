@@ -28,6 +28,8 @@ interface TaskVariant {
   items: string
   embodiment_id: number | null
   teleop_mode_id: number | null
+  embodiment?: { id: number; name: string } | null
+  teleop_mode?: { id: number; name: string } | null
   notes: string
   media: string[]
 }
@@ -251,17 +253,17 @@ function TasksPage() {
                                           </div>
                                         )}
 
-                                        {variant.embodiment_id && (
+                                        {variant.embodiment && (
                                           <div>
-                                            <span className="font-bold">Embodiment ID: </span>
-                                            <span className="text-gray-300 text-xs">{variant.embodiment_id}</span>
+                                            <span className="font-bold">Embodiment: </span>
+                                            <span className="text-gray-300 text-xs">{variant.embodiment.name}</span>
                                           </div>
                                         )}
 
-                                        {variant.teleop_mode_id && (
+                                        {variant.teleop_mode && (
                                           <div>
-                                            <span className="font-bold">Teleop Mode ID: </span>
-                                            <span className="text-gray-300 text-xs">{variant.teleop_mode_id}</span>
+                                            <span className="font-bold">Teleop Mode: </span>
+                                            <span className="text-gray-300 text-xs">{variant.teleop_mode.name}</span>
                                           </div>
                                         )}
 

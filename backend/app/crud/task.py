@@ -1,5 +1,5 @@
 from typing import List, Optional
-from sqlalchemy.orm import Session
+from sqlalchemy.orm import Session, joinedload
 from sqlalchemy import and_
 
 from app.models.task import Task
@@ -131,8 +131,14 @@ def get_task_detail_summary(db: Session, task_id: int) -> TaskDetailSummary:
     if not task:
         return None
 
-    # Get variants
-    variants = db.query(TaskVariant).filter(TaskVariant.task_id == task_id).all()
+    # Get variants with joined embodiment and teleop mode
+    variants = db.query(TaskVariant)\
+        .options(
+            joinedload(TaskVariant.embodiment),
+            joinedload(TaskVariant.teleop_mode)
+        )\
+        .filter(TaskVariant.task_id == task_id)\
+        .all()
 
     # Get subdatasets via junction table
     subdataset_links = db.query(TasksToSubdatasets).filter(TasksToSubdatasets.task_id == task_id).all()
@@ -158,6 +164,13 @@ def get_task_detail_summary(db: Session, task_id: int) -> TaskDetailSummary:
             "teleop_mode": TeleopModeInfo.model_validate(orm_to_dict(sd.teleop_mode)) if sd.teleop_mode else None,
         })
 
+    def variant_to_summary(variant):
+        return {
+            **variant.__dict__,
+            "embodiment": EmbodimentInfo.model_validate(orm_to_dict(variant.embodiment)) if variant.embodiment else None,
+            "teleop_mode": TeleopModeInfo.model_validate(orm_to_dict(variant.teleop_mode)) if variant.teleop_mode else None,
+        }
+
     return TaskDetailSummary(
         id=task.id,
         name=task.name,
@@ -165,7 +178,7 @@ def get_task_detail_summary(db: Session, task_id: int) -> TaskDetailSummary:
         status=task.status,
         created_at=task.created_at,
         is_external=task.is_external,
-        variants=variants,
+        variants=[variant_to_summary(v) for v in variants],
         subdatasets=[subdataset_to_summary(sd) for sd in subdatasets],
         training_runs=[TrainingRunSummary.model_validate(tr) for tr in training_runs],
         evaluations=[EvaluationSummary.model_validate(ev) for ev in evaluations],

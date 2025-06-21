@@ -10,6 +10,8 @@ interface TaskVariant {
   items: string | null
   embodiment_id: number | null
   teleop_mode_id: number | null
+  embodiment?: { id: number; name: string } | null
+  teleop_mode?: { id: number; name: string } | null
   notes: string | null
   media: string[]
 }
@@ -108,8 +110,8 @@ const TaskDetailPage: React.FC = () => {
                   <div className="mt-2 space-y-2">
                     {variant.description && <div className="text-gray-300 text-sm">{variant.description}</div>}
                     {variant.items && <div className="text-xs text-gray-400">Items: {variant.items}</div>}
-                    {variant.embodiment_id && <div className="text-xs text-gray-400">Embodiment ID: {variant.embodiment_id}</div>}
-                    {variant.teleop_mode_id && <div className="text-xs text-gray-400">Teleop Mode ID: {variant.teleop_mode_id}</div>}
+                    {variant.embodiment && <div className="text-xs text-gray-400">Embodiment: {variant.embodiment.name}</div>}
+                    {variant.teleop_mode && <div className="text-xs text-gray-400">Teleop Mode: {variant.teleop_mode.name}</div>}
                     {variant.notes && <div className="text-xs text-gray-400">Notes: {variant.notes}</div>}
                     {variant.media && variant.media.length > 0 && (
                       <div className="text-xs text-gray-400 mt-1">Media: {variant.media.map((url, i) => <a key={i} href={url} target="_blank" rel="noopener noreferrer" className="text-accent hover:underline ml-2">Link {i+1}</a>)}</div>
