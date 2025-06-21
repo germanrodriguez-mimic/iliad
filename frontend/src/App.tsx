@@ -12,7 +12,7 @@ function App() {
     <div className="min-h-screen bg-background">
       <nav className="fixed w-full z-10 bg-background px-8 py-4">
         <Link to="/" className="text-xl font-bold hover:text-accent transition-colors">
-          mimic data manager
+          mimic hub
         </Link>
       </nav>
 
@@ -20,7 +20,7 @@ function App() {
         <Routes>
           <Route path="/" element={
             <div className="max-w-6xl mx-auto">
-              <h1 className="text-4xl mb-12 text-center">Welcome to the mimic data manager</h1>
+              <h1 className="text-4xl mb-12 text-center">Welcome to the mimic hub</h1>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-8 max-w-2xl mx-auto">
                 <Link to="/tasks" className="action-button">Manage Tasks</Link>
                 <Link to="/subdatasets" className="action-button">Manage Subdatasets</Link>

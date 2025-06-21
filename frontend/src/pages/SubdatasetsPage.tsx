@@ -93,9 +93,6 @@ function SubdatasetsPage() {
     <div className="max-w-4xl mx-auto">
       <div className="flex justify-between items-center mb-8">
         <h1 className="text-3xl">Subdatasets</h1>
-        <div className="space-x-4">
-          <button className="action-button py-2 px-4">Add New Subdataset</button>
-        </div>
       </div>
 
       <div className="mb-4 flex justify-start">
