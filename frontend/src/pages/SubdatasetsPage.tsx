@@ -1,4 +1,4 @@
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import axios from 'axios'
 import { Link } from 'react-router-dom'
@@ -77,15 +77,47 @@ interface Subdataset {
 function SubdatasetsPage() {
   const [expandedSubdatasetId, setExpandedSubdatasetId] = useState<number | null>(null)
   const [search, setSearch] = useState('')
+  const [selectedTaskId, setSelectedTaskId] = useState<number | null>(null)
+  const [selectedVariantId, setSelectedVariantId] = useState<number | null>(null)
 
-  // Query for subdataset list
-  const { data: subdatasets, isLoading } = useQuery<SubdatasetList[]>({
-    queryKey: ['subdatasets-list'],
+  // Fetch all tasks for filter dropdown
+  const { data: tasks, isLoading: loadingTasks } = useQuery<Task[]>({
+    queryKey: ['tasks-list'],
     queryFn: async () => {
-      const response = await axios.get('http://localhost:8000/api/v1/subdatasets/list')
+      const response = await axios.get('http://localhost:8000/api/v1/tasks/')
       return response.data
     }
   })
+
+  // Fetch variants for selected task
+  const { data: variants, isLoading: loadingVariants } = useQuery<TaskVariant[]>({
+    queryKey: ['task-variants', selectedTaskId],
+    queryFn: async () => {
+      if (!selectedTaskId) return []
+      const response = await axios.get(`http://localhost:8000/api/v1/tasks/${selectedTaskId}/variants/`)
+      return response.data
+    },
+    enabled: !!selectedTaskId
+  })
+
+  // Query for subdataset list, filtered by task/variant
+  const { data: subdatasets, isLoading } = useQuery<SubdatasetList[]>({
+    queryKey: ['subdatasets-list', selectedTaskId, selectedVariantId],
+    queryFn: async () => {
+      let url = 'http://localhost:8000/api/v1/subdatasets/list'
+      const params = []
+      if (selectedTaskId) params.push(`task_id=${selectedTaskId}`)
+      if (selectedVariantId) params.push(`variant_id=${selectedVariantId}`)
+      if (params.length > 0) url += '?' + params.join('&')
+      const response = await axios.get(url)
+      return response.data
+    }
+  })
+
+  // Reset variant filter if task changes
+  useEffect(() => {
+    setSelectedVariantId(null)
+  }, [selectedTaskId])
 
   // Query for expanded subdataset details
   const { data: expandedSubdataset } = useQuery<Subdataset>({
@@ -116,7 +148,7 @@ function SubdatasetsPage() {
     )
     .sort((a, b) => b.name.localeCompare(a.name))
 
-  if (isLoading) {
+  if (isLoading || loadingTasks) {
     return (
       <div className="flex justify-center items-center min-h-screen">
         <div className="text-xl">Loading subdatasets...</div>
@@ -130,7 +162,29 @@ function SubdatasetsPage() {
         <h1 className="text-3xl">Subdatasets</h1>
       </div>
 
-      <div className="mb-4 flex justify-start">
+      {/* Filter dropdowns */}
+      <div className="mb-4 flex gap-4 items-center">
+        <select
+          className="px-2 py-1 rounded border border-border bg-background text-white text-sm focus:outline-none focus:ring-2 focus:ring-accent"
+          value={selectedTaskId !== null ? String(selectedTaskId) : ''}
+          onChange={e => setSelectedTaskId(e.target.value ? parseInt(e.target.value) : null)}
+        >
+          <option value="">Filter by Task</option>
+          {tasks?.map(task => (
+            <option key={task.id} value={String(task.id)}>{task.name}</option>
+          ))}
+        </select>
+        <select
+          className="px-2 py-1 rounded border border-border bg-background text-white text-sm focus:outline-none focus:ring-2 focus:ring-accent"
+          value={selectedVariantId !== null ? String(selectedVariantId) : ''}
+          onChange={e => setSelectedVariantId(e.target.value ? parseInt(e.target.value) : null)}
+          disabled={!selectedTaskId || loadingVariants}
+        >
+          <option value="">Filter by Variant</option>
+          {variants?.map(variant => (
+            <option key={variant.id} value={String(variant.id)}>{variant.name}</option>
+          ))}
+        </select>
         <input
           type="text"
           placeholder="Search by name..."

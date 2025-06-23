@@ -60,9 +60,31 @@ def get_subdataset(db: Session, subdataset_id: int) -> Optional[Subdataset]:
 def get_subdatasets(
     db: Session,
     skip: int = 0,
-    limit: int = 100
+    limit: int = 100,
+    task_id: Optional[int] = None,
+    variant_id: Optional[int] = None
 ) -> List[Subdataset]:
-    return db.query(Subdataset)\
+    query = db.query(Subdataset)
+    
+    if variant_id is not None:
+        # Filter subdatasets linked to the given variant
+        links = db.query(TaskVariantsToSubdatasets).filter(TaskVariantsToSubdatasets.task_variant_id == variant_id).all()
+        subdataset_ids = [link.subdataset_id for link in links]
+        if not subdataset_ids:
+            return []
+        query = query.filter(Subdataset.id.in_(subdataset_ids))
+    elif task_id is not None:
+        # Filter subdatasets linked to any variant of the given task
+        variant_ids = [v.id for v in db.query(TaskVariant).filter(TaskVariant.task_id == task_id).all()]
+        if not variant_ids:
+            return []
+        links = db.query(TaskVariantsToSubdatasets).filter(TaskVariantsToSubdatasets.task_variant_id.in_(variant_ids)).all()
+        subdataset_ids = [link.subdataset_id for link in links]
+        if not subdataset_ids:
+            return []
+        query = query.filter(Subdataset.id.in_(subdataset_ids))
+    
+    return query\
         .options(
             joinedload(Subdataset.embodiment),
             joinedload(Subdataset.teleop_mode)

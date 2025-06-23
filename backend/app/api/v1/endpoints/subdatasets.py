@@ -19,12 +19,16 @@ router = APIRouter()
 def read_subdatasets_list(
     skip: int = 0,
     limit: int = 100,
+    task_id: Optional[int] = Query(None),
+    variant_id: Optional[int] = Query(None),
     db: Session = Depends(get_db)
 ):
     subdatasets = crud.get_subdatasets(
         db=db,
         skip=skip,
-        limit=limit
+        limit=limit,
+        task_id=task_id,
+        variant_id=variant_id
     )
     return subdatasets
 
