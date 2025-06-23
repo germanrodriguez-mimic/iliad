@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react'
-import { useQuery } from '@tanstack/react-query'
+import { useQuery, useQueryClient } from '@tanstack/react-query'
 import axios from 'axios'
 import { Link } from 'react-router-dom'
 
@@ -124,6 +124,43 @@ function TasksPage() {
     )
   }
 
+  const queryClient = useQueryClient()
+  // Toast state
+  const [toast, setToast] = useState<{ message: string; visible: boolean }>({ message: '', visible: false })
+  // For drag-and-drop
+  const [draggedTaskId, setDraggedTaskId] = useState<number | null>(null)
+
+  // Toast effect
+  useEffect(() => {
+    if (toast.visible) {
+      const timer = setTimeout(() => setToast({ ...toast, visible: false }), 2000)
+      return () => clearTimeout(timer)
+    }
+  }, [toast])
+
+  // Drag handlers
+  const handleDragStart = (taskId: number) => {
+    setDraggedTaskId(taskId)
+  }
+  const handleDragEnd = () => {
+    setDraggedTaskId(null)
+  }
+  const handleDrop = async (status: string) => {
+    if (draggedTaskId == null) return
+    // Find the task
+    const task = tasks?.find(t => t.id === draggedTaskId)
+    if (!task || task.status === status) return
+    try {
+      await axios.put(`http://localhost:8000/api/v1/tasks/${draggedTaskId}`, { status })
+      setToast({ message: `Task "${task.name}" moved to "${status}"`, visible: true })
+      queryClient.invalidateQueries(['tasks-list'])
+    } catch (e) {
+      setToast({ message: 'Failed to update task status', visible: true })
+    } finally {
+      setDraggedTaskId(null)
+    }
+  }
+
   if (isLoading) {
     return (
       <div className="flex justify-center items-center min-h-screen">
@@ -134,6 +171,12 @@ function TasksPage() {
 
   return (
     <div className="max-w-full mx-auto">
+      {/* Toast popup */}
+      {toast.visible && (
+        <div className="fixed top-6 left-1/2 -translate-x-1/2 bg-accent text-black px-6 py-2 rounded shadow z-50 text-sm animate-fade-in">
+          {toast.message}
+        </div>
+      )}
       <div className="flex justify-between items-center mb-8 px-4">
         <h1 className="text-3xl">Tasks</h1>
         <div className="space-x-4">
@@ -182,14 +225,25 @@ function TasksPage() {
       <div className="overflow-x-auto pb-4">
         <div className="flex flex-row gap-6 min-w-max">
           {TASK_STATUSES.filter((status) => visibleStatuses.includes(status)).map((status) => (
-            <div key={status} className="flex-shrink-0 w-80 bg-surface rounded-lg p-4 border border-border min-h-[70vh] flex flex-col">
+            <div
+              key={status}
+              className="flex-shrink-0 w-80 bg-surface rounded-lg p-4 border border-border min-h-[70vh] flex flex-col"
+              onDragOver={e => { e.preventDefault(); }}
+              onDrop={() => handleDrop(status)}
+            >
               <div className="font-bold text-lg mb-4 capitalize text-center text-accent">{status}</div>
               <div className="flex-1 space-y-4">
                 {tasksByStatus[status].length === 0 && (
                   <div className="text-gray-500 text-center">No tasks</div>
                 )}
                 {tasksByStatus[status].map((task) => (
-                  <div key={task.id} className="bg-background rounded-lg overflow-hidden shadow group">
+                  <div
+                    key={task.id}
+                    className={`bg-background rounded-lg overflow-hidden shadow group ${draggedTaskId === task.id ? 'opacity-50' : ''}`}
+                    draggable
+                    onDragStart={() => handleDragStart(task.id)}
+                    onDragEnd={handleDragEnd}
+                  >
                     <div
                       className="w-full px-4 py-3 flex justify-between items-center transition-colors group-hover:bg-accent group-hover:text-black"
                     >
