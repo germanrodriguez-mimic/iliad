@@ -76,10 +76,12 @@ function SubdatasetsPage() {
     enabled: !!expandedSubdatasetId
   })
 
-  // Filter subdatasets by search
-  const filteredSubdatasets = subdatasets?.filter((subdataset) =>
-    subdataset.name.toLowerCase().includes(search.toLowerCase())
-  )
+  // Filter subdatasets by search and sort in reverse alphabetical order
+  const filteredSubdatasets = subdatasets
+    ?.filter((subdataset) =>
+      subdataset.name.toLowerCase().includes(search.toLowerCase())
+    )
+    .sort((a, b) => b.name.localeCompare(a.name))
 
   if (isLoading) {
     return (
@@ -116,16 +118,24 @@ function SubdatasetsPage() {
           filteredSubdatasets?.map((subdataset) => (
             <React.Fragment key={subdataset.id}>
               <div className="bg-surface rounded-lg overflow-hidden flex items-center justify-between px-6 py-4">
-                <button
-                  onClick={() => setExpandedSubdatasetId(expandedSubdatasetId === subdataset.id ? null : subdataset.id)}
-                  className="flex-1 text-left flex items-center hover:bg-accent hover:text-black transition-colors focus:outline-none"
-                  style={{ background: 'none', border: 'none', padding: 0 }}
-                >
-                  <span className="text-xl truncate block">{subdataset.name}</span>
-                </button>
+                <div className="flex-1 min-w-0 flex items-center">
+                  <button
+                    onClick={() => setExpandedSubdatasetId(expandedSubdatasetId === subdataset.id ? null : subdataset.id)}
+                    className="w-full text-left flex items-center hover:bg-accent hover:text-black transition-colors focus:outline-none"
+                    style={{ background: 'none', border: 'none', padding: 0 }}
+                  >
+                    <span
+                      className="text-xl block w-full max-w-full min-w-0 whitespace-nowrap overflow-x-auto scrollbar-thin scrollbar-thumb-gray-700 scrollbar-track-gray-900 pr-2"
+                      style={{ WebkitOverflowScrolling: 'touch' }}
+                      title={subdataset.name}
+                    >
+                      {subdataset.name}
+                    </span>
+                  </button>
+                </div>
                 <a
                   href={`/subdatasets/${subdataset.id}`}
-                  className="action-button py-2 px-4 text-sm ml-4"
+                  className="action-button py-2 px-4 text-sm ml-4 flex-shrink-0"
                 >
                   Full View
                 </a>
