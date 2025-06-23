@@ -164,17 +164,13 @@ const SubdatasetDetailPage: React.FC = () => {
                         {task.name}
                       </Link>
                       {task.variants && task.variants.length > 0 && (
-                        <ul className="ml-4 mt-3 space-y-2">
-                          {task.variants.map(variant => (
-                            <li key={variant.id}>
-                              <div className="border border-border rounded bg-surface p-2">
-                                <Link to={`/tasks/${task.id}`} className="text-accent hover:underline text-sm">
-                                  {variant.name}
-                                </Link>
-                              </div>
-                            </li>
-                          ))}
-                        </ul>
+                        <div className="ml-4 mt-3">
+                          <div className="border border-border rounded bg-surface p-2">
+                            <Link to={`/tasks/${task.id}`} className="text-accent hover:underline text-sm">
+                              {task.variants[0].name}
+                            </Link>
+                          </div>
+                        </div>
                       )}
                     </div>
                   </li>

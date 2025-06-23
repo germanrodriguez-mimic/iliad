@@ -1,6 +1,7 @@
 import React, { useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import axios from 'axios'
+import { Link } from 'react-router-dom'
 
 interface EmbodimentInfo {
   id: number
@@ -39,6 +40,27 @@ interface RawEpisode {
   uploaded_at: string
 }
 
+interface TaskVariant {
+  id: number
+  name: string
+  description: string | null
+  items: string | null
+  embodiment_id: number | null
+  teleop_mode_id: number | null
+  notes: string | null
+  media: string[]
+}
+
+interface Task {
+  id: number
+  name: string
+  description: string | null
+  status: string
+  created_at: string
+  is_external: boolean
+  variants: TaskVariant[]
+}
+
 interface Subdataset {
   id: number
   name: string
@@ -71,6 +93,17 @@ function SubdatasetsPage() {
     queryFn: async () => {
       if (!expandedSubdatasetId) return null
       const response = await axios.get(`http://localhost:8000/api/v1/subdatasets/${expandedSubdatasetId}`)
+      return response.data
+    },
+    enabled: !!expandedSubdatasetId
+  })
+
+  // Query for linked task and variant for expanded subdataset
+  const { data: expandedLinkedTasks, isLoading: loadingLinkedTasks } = useQuery<Task[]>({
+    queryKey: ['subdataset-linked-tasks', expandedSubdatasetId],
+    queryFn: async () => {
+      if (!expandedSubdatasetId) return []
+      const response = await axios.get(`http://localhost:8000/api/v1/subdatasets/${expandedSubdatasetId}/linked_tasks/`)
       return response.data
     },
     enabled: !!expandedSubdatasetId
@@ -177,6 +210,23 @@ function SubdatasetsPage() {
                             </p>
                           </div>
                         </div>
+                      </div>
+                      {/* Linked Task and Variant */}
+                      <div>
+                        <h3 className="text-lg font-bold mb-2">Linked Task & Variant</h3>
+                        {loadingLinkedTasks ? (
+                          <div className="text-gray-400">Loading linked task...</div>
+                        ) : expandedLinkedTasks && expandedLinkedTasks.length > 0 && expandedLinkedTasks[0].variants.length > 0 ? (
+                          <div className="text-gray-300">
+                            <span className="font-bold">Task: </span>
+                            <Link to={`/tasks/${expandedLinkedTasks[0].id}`} className="text-accent hover:underline">{expandedLinkedTasks[0].name}</Link>
+                            <br />
+                            <span className="font-bold">Variant: </span>
+                            <span>{expandedLinkedTasks[0].variants[0].name}</span>
+                          </div>
+                        ) : (
+                          <div className="text-gray-400">No linked task.</div>
+                        )}
                       </div>
                     </div>
                   ) : (

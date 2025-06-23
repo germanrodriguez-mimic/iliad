@@ -233,6 +233,6 @@ def read_linked_tasks(
     subdataset_id: int
 ) -> List[Task]:
     """
-    Retrieve all tasks (and their variants) linked to a subdataset.
+    Retrieve the single task (and its linked variant) for a subdataset.
     """
-    return crud.get_tasks_and_variants_by_subdataset(db=db, subdataset_id=subdataset_id) 
+    return crud.get_linked_task_and_variant_by_subdataset(db=db, subdataset_id=subdataset_id) 

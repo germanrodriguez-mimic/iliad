@@ -1,5 +1,5 @@
 from datetime import datetime
-from typing import Optional, List
+from typing import Optional, List, Dict
 from pydantic import BaseModel
 from app.schemas.subdataset import SubdatasetList, EmbodimentInfo, TeleopModeInfo
 from app.schemas.training_run import TrainingRunSummary
@@ -58,11 +58,16 @@ class TaskList(TaskBase):
     class Config:
         from_attributes = True
 
+class TaskVariantSubdatasets(BaseModel):
+    variant: TaskVariant
+    subdatasets: List[SubdatasetList]
+
 class TaskDetailSummary(TaskBase):
     id: int
     created_at: datetime
     variants: List[TaskVariant] = []
     subdatasets: List[SubdatasetList] = []
+    subdatasets_by_variant: List[TaskVariantSubdatasets] = []
     training_runs: List[TrainingRunSummary] = []
     evaluations: List[EvaluationSummary] = []
 

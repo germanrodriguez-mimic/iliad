@@ -15,6 +15,7 @@ from app.schemas.subdataset import (
 from app.models.tasks_to_subdatasets import TasksToSubdatasets
 from app.models.task import Task
 from app.models.task_variant import TaskVariant
+from app.models.task_variants_to_subdatasets import TaskVariantsToSubdatasets
 
 # Subdataset CRUD operations
 def create_subdataset(db: Session, subdataset: SubdatasetCreate) -> Subdataset:
@@ -185,4 +186,21 @@ def get_tasks_and_variants_by_subdataset(db: Session, subdataset_id: int):
     # Attach variants to each task
     for task in tasks:
         task.variants = db.query(TaskVariant).filter(TaskVariant.task_id == task.id).all()
-    return tasks 
+    return tasks
+
+def get_linked_task_and_variant_by_subdataset(db: Session, subdataset_id: int):
+    # Find the link in task_variants_to_subdatasets
+    link = db.query(TaskVariantsToSubdatasets).filter(TaskVariantsToSubdatasets.subdataset_id == subdataset_id).first()
+    if not link:
+        return []
+    # Get the variant
+    variant = db.query(TaskVariant).filter(TaskVariant.id == link.task_variant_id).first()
+    if not variant:
+        return []
+    # Get the task
+    task = db.query(Task).filter(Task.id == variant.task_id).first()
+    if not task:
+        return []
+    # Attach only the linked variant
+    task.variants = [variant]
+    return [task] 

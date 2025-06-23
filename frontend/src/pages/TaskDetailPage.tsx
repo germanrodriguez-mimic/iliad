@@ -42,6 +42,11 @@ interface EvaluationSummary {
   notes: string | null
 }
 
+interface TaskVariantSubdatasets {
+  variant: TaskVariant;
+  subdatasets: SubdatasetList[];
+}
+
 interface TaskDetailSummary {
   id: number
   name: string
@@ -51,6 +56,7 @@ interface TaskDetailSummary {
   is_external: boolean
   variants: TaskVariant[]
   subdatasets: SubdatasetList[]
+  subdatasets_by_variant: TaskVariantSubdatasets[]
   training_runs: TrainingRunSummary[]
   evaluations: EvaluationSummary[]
 }
@@ -124,16 +130,40 @@ const TaskDetailPage: React.FC = () => {
         )}
       </section>
 
-      {/* Subdatasets */}
+      {/* Subdatasets (grouped by variant) */}
       <section className="mb-8">
-        <h2 className="text-xl font-semibold mb-2">Linked Subdatasets</h2>
-        {data.subdatasets.length === 0 ? <div className="text-gray-400">No subdatasets linked.</div> : (
+        <h2 className="text-xl font-semibold mb-2">Linked Subdatasets (by Variant)</h2>
+        {(!data.subdatasets_by_variant || data.subdatasets_by_variant.length === 0) ? (
+          <div className="text-gray-400">No subdatasets linked.</div>
+        ) : (
           <ul className="space-y-4 max-h-80 overflow-y-auto pr-2">
-            {data.subdatasets.map(sd => (
-              <li key={sd.id} className="border border-border rounded p-3 bg-background">
-                <Link to={`/subdatasets/${sd.id}`} className="font-bold text-accent hover:underline">{sd.name}</Link>
-                {sd.description && <div className="text-gray-300 text-sm mb-1">{sd.description}</div>}
-                {sd.notes && <div className="text-xs text-gray-400">Notes: {sd.notes}</div>}
+            {data.subdatasets_by_variant.map((group) => (
+              <li key={group.variant.id} className="border border-border rounded p-3 bg-background">
+                <button
+                  className="w-full text-left font-bold flex justify-between items-center hover:text-accent"
+                  onClick={() => setExpandedVariantId(expandedVariantId === group.variant.id ? null : group.variant.id)}
+                >
+                  {group.variant.name}
+                  <span className="ml-2 text-xs">{expandedVariantId === group.variant.id ? '▲' : '▼'}</span>
+                </button>
+                {expandedVariantId === group.variant.id && (
+                  <div className="mt-2">
+                    <h3 className="font-semibold text-sm mb-1">Linked Subdatasets:</h3>
+                    {group.subdatasets.length === 0 ? (
+                      <div className="text-gray-400 text-xs">No subdatasets linked to this variant.</div>
+                    ) : (
+                      <ul className="space-y-2">
+                        {group.subdatasets.map(sd => (
+                          <li key={sd.id} className="border border-border rounded p-2 bg-surface">
+                            <Link to={`/subdatasets/${sd.id}`} className="font-bold text-accent hover:underline">{sd.name}</Link>
+                            {sd.description && <div className="text-gray-300 text-xs mb-1">{sd.description}</div>}
+                            {sd.notes && <div className="text-xs text-gray-400">Notes: {sd.notes}</div>}
+                          </li>
+                        ))}
+                      </ul>
+                    )}
+                  </div>
+                )}
               </li>
             ))}
           </ul>

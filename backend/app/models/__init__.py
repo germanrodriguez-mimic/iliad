@@ -8,6 +8,7 @@ from app.models.training_run import TrainingRun, TrainingRunsToTasks
 from app.models.evaluation import Evaluation
 from app.models.tasks_to_subdatasets import TasksToSubdatasets
 from app.models.episode import Episode
+from app.models.task_variants_to_subdatasets import TaskVariantsToSubdatasets
 
 __all__ = [
     "Task",
@@ -20,5 +21,6 @@ __all__ = [
     "TrainingRunsToTasks",
     "Evaluation",
     "TasksToSubdatasets",
+    "TaskVariantsToSubdatasets",
     "Episode"
 ] 
