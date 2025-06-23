@@ -131,7 +131,7 @@ const TaskDetailPage: React.FC = () => {
           <ul className="space-y-4 max-h-80 overflow-y-auto pr-2">
             {data.subdatasets.map(sd => (
               <li key={sd.id} className="border border-border rounded p-3 bg-background">
-                <div className="font-bold">{sd.name}</div>
+                <Link to={`/subdatasets/${sd.id}`} className="font-bold text-accent hover:underline">{sd.name}</Link>
                 {sd.description && <div className="text-gray-300 text-sm mb-1">{sd.description}</div>}
                 {sd.notes && <div className="text-xs text-gray-400">Notes: {sd.notes}</div>}
               </li>
