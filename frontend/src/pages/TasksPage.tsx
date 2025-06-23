@@ -189,10 +189,12 @@ function TasksPage() {
                   <div className="text-gray-500 text-center">No tasks</div>
                 )}
                 {tasksByStatus[status].map((task) => (
-                  <div key={task.id} className="bg-background rounded-lg overflow-hidden shadow">
-                    <div className="w-full px-4 py-3 flex justify-between items-center hover:bg-accent hover:text-black transition-colors">
+                  <div key={task.id} className="bg-background rounded-lg overflow-hidden shadow group">
+                    <div
+                      className="w-full px-4 py-3 flex justify-between items-center transition-colors group-hover:bg-accent group-hover:text-black"
+                    >
                       <span
-                        className="text-lg font-semibold text-left cursor-pointer hover:text-accent"
+                        className="text-lg font-semibold text-left cursor-pointer group-hover:text-black"
                         onClick={() => setExpandedTaskId(expandedTaskId === task.id ? null : task.id)}
                       >
                         {task.name}
@@ -203,16 +205,16 @@ function TasksPage() {
                         )}
                       </div>
                     </div>
-                    <div className="px-4 pb-2 flex gap-2">
+                    <div className="px-4 pb-2 flex gap-2 transition-colors group-hover:bg-accent group-hover:text-black">
                       <Link
                         to={`/tasks/${task.id}`}
-                        className="action-button py-1 px-3 text-xs"
+                        className="action-button py-1 px-3 text-xs hover:bg-accent hover:text-black"
                       >
                         Full View
                       </Link>
                       <Link
                         to={`/tasks/${task.id}/edit`}
-                        className="action-button py-1 px-3 text-xs"
+                        className="action-button py-1 px-3 text-xs hover:bg-accent hover:text-black"
                       >
                         Edit
                       </Link>
