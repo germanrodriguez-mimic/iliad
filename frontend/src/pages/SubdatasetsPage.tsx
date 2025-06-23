@@ -117,15 +117,14 @@ function SubdatasetsPage() {
         ) : (
           filteredSubdatasets?.map((subdataset) => (
             <React.Fragment key={subdataset.id}>
-              <div className="bg-surface rounded-lg overflow-hidden flex items-center justify-between px-6 py-4">
+              <div className="bg-surface rounded-lg overflow-hidden flex items-center justify-between px-6 py-4 transition-colors group hover:bg-accent hover:text-black">
                 <div className="flex-1 min-w-0 flex items-center">
                   <button
                     onClick={() => setExpandedSubdatasetId(expandedSubdatasetId === subdataset.id ? null : subdataset.id)}
-                    className="w-full text-left flex items-center hover:bg-accent hover:text-black transition-colors focus:outline-none"
-                    style={{ background: 'none', border: 'none', padding: 0 }}
+                    className="w-full text-left flex items-center bg-transparent border-0 p-0 group-hover:text-black transition-colors focus:outline-none"
                   >
                     <span
-                      className="text-xl block w-full max-w-full min-w-0 whitespace-nowrap overflow-x-auto scrollbar-thin scrollbar-thumb-gray-700 scrollbar-track-gray-900 pr-2"
+                      className="text-xl block w-full max-w-full min-w-0 whitespace-nowrap overflow-x-auto scrollbar-thin scrollbar-thumb-gray-700 scrollbar-track-gray-900 pr-2 group-hover:text-black"
                       style={{ WebkitOverflowScrolling: 'touch' }}
                       title={subdataset.name}
                     >
@@ -135,7 +134,7 @@ function SubdatasetsPage() {
                 </div>
                 <a
                   href={`/subdatasets/${subdataset.id}`}
-                  className="action-button py-2 px-4 text-sm ml-4 flex-shrink-0"
+                  className="action-button py-2 px-4 text-sm ml-4 flex-shrink-0 group-hover:bg-black group-hover:text-accent"
                 >
                   Full View
                 </a>
