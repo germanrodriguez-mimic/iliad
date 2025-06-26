@@ -10,9 +10,10 @@ export default {
         background: '#0d0d0d',
         surface: '#1a1a1a',
         border: '#555',
-        accent: '#ff7a20',
+        accent: '#DAA520',
       },
       fontFamily: {
+        sans: ['Roboto', 'ui-sans-serif', 'system-ui', 'sans-serif'],
         mono: ['Space Mono', 'monospace'],
       },
     },
