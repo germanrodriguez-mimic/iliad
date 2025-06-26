@@ -132,7 +132,7 @@ const TaskDetailPage: React.FC = () => {
 
       {/* Subdatasets (grouped by variant) */}
       <section className="mb-8">
-        <h2 className="text-xl font-semibold mb-2">Linked Subdatasets (by Variant)</h2>
+        <h2 className="text-xl font-semibold mb-2">Linked Subdatasets</h2>
         {(!data.subdatasets_by_variant || data.subdatasets_by_variant.length === 0) ? (
           <div className="text-gray-400">No subdatasets linked.</div>
         ) : (
