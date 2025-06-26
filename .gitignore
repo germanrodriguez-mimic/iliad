@@ -44,3 +44,6 @@
 
 # Project specific
 docs/context/
+
+# Config
+service_account.json
