@@ -202,6 +202,19 @@ const SubdatasetDetailPage: React.FC = () => {
                 <ul className="space-y-2 max-h-80 overflow-y-auto pr-2">
                   {processedEpisodes.map(ep => (
                     <li key={ep.id} className="border border-border rounded p-3 bg-background">
+                      {/* Show episode name as clickable link at the top if url exists */}
+                      {ep.url && (
+                        <div className="mb-2">
+                          <a
+                            href={ep.url}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="text-accent hover:underline font-bold"
+                          >
+                            {ep.url.split('/').pop()}
+                          </a>
+                        </div>
+                      )}
                       <div className="flex flex-wrap gap-4 text-xs">
                         <div><span className="font-bold">Raw Episode ID:</span> {ep.raw_episode_id}</div>
                         <div><span className="font-bold">Conversion Version ID:</span> {ep.conversion_version_id}</div>
@@ -211,7 +224,6 @@ const SubdatasetDetailPage: React.FC = () => {
                           <div><span className="font-bold">Label:</span> {rawEpisodes.find(r => r.id === ep.raw_episode_id)?.label || 'N/A'}</div>
                         )}
                       </div>
-                      {ep.url && <div className="mt-2"><a href={ep.url} target="_blank" rel="noopener noreferrer" className="text-accent hover:underline">View Processed Episode</a></div>}
                     </li>
                   ))}
                 </ul>
@@ -242,13 +254,25 @@ const SubdatasetDetailPage: React.FC = () => {
                 <ul className="space-y-2 max-h-80 overflow-y-auto pr-2">
                   {rawEpisodes.map(ep => (
                     <li key={ep.id} className="border border-border rounded p-3 bg-background">
+                      {/* Show episode name as clickable link at the top if url exists */}
+                      {ep.url && (
+                        <div className="mb-2">
+                          <a
+                            href={ep.url}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="text-accent hover:underline font-bold"
+                          >
+                            {ep.url.split('/').pop()}
+                          </a>
+                        </div>
+                      )}
                       <div className="flex flex-wrap gap-4 text-xs">
                         <div><span className="font-bold">Operator:</span> {ep.operator || 'N/A'}</div>
                         <div><span className="font-bold">Label:</span> {ep.label || 'N/A'}</div>
                         <div><span className="font-bold">Recorded At:</span> {ep.recorded_at ? new Date(ep.recorded_at).toLocaleString() : 'N/A'}</div>
                         <div><span className="font-bold">Uploaded At:</span> {new Date(ep.uploaded_at).toLocaleString()}</div>
                       </div>
-                      {ep.url && <div className="mt-2"><a href={ep.url} target="_blank" rel="noopener noreferrer" className="text-accent hover:underline">View Episode</a></div>}
                     </li>
                   ))}
                 </ul>
