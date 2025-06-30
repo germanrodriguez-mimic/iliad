@@ -65,8 +65,12 @@ def get_subdatasets(
     variant_id: Optional[int] = None
 ) -> List[Subdataset]:
     query = db.query(Subdataset)
-    
-    if variant_id is not None:
+
+    # Unassigned logic: if -1, return subdatasets not linked to any variant
+    if variant_id == -1 or task_id == -1:
+        assigned_subdataset_ids = db.query(TaskVariantsToSubdatasets.subdataset_id).distinct()
+        query = query.filter(~Subdataset.id.in_(assigned_subdataset_ids))
+    elif variant_id is not None:
         # Filter subdatasets linked to the given variant
         links = db.query(TaskVariantsToSubdatasets).filter(TaskVariantsToSubdatasets.task_variant_id == variant_id).all()
         subdataset_ids = [link.subdataset_id for link in links]
@@ -83,7 +87,7 @@ def get_subdatasets(
         if not subdataset_ids:
             return []
         query = query.filter(Subdataset.id.in_(subdataset_ids))
-    
+
     return query\
         .options(
             joinedload(Subdataset.embodiment),

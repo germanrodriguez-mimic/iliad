@@ -105,21 +105,13 @@ function SubdatasetsPage() {
     queryKey: ['subdatasets-list', selectedTaskId, selectedVariantId],
     queryFn: async () => {
       let url = 'http://localhost:8000/api/v1/subdatasets/list'
-      const params = []
+      const params: string[] = []
       if (selectedTaskId && selectedTaskId !== '-1') params.push(`task_id=${parseInt(selectedTaskId)}`)
+      if (selectedTaskId === '-1') params.push('task_id=-1')
       if (selectedVariantId) params.push(`variant_id=${parseInt(selectedVariantId)}`)
       if (params.length > 0) url += '?' + params.join('&')
       const response = await axios.get(url)
       return response.data
-    }
-  })
-
-  // Query for subdataset-to-task links for all subdatasets (for unassigned filter)
-  const { data: subdatasetLinks } = useQuery<{ [subdatasetId: number]: number[] }>({
-    queryKey: ['subdataset-task-links'],
-    queryFn: async () => {
-      const response = await axios.get('http://localhost:8000/api/v1/subdatasets/task_links')
-      return response.data // { [subdatasetId]: [taskVariantId, ...] }
     }
   })
 
@@ -154,15 +146,6 @@ function SubdatasetsPage() {
   const filteredSubdatasets = subdatasets
     ?.filter((subdataset) => {
       const matchesSearch = subdataset.name.toLowerCase().includes(search.toLowerCase())
-      // If 'Unassigned' is selected, show only subdatasets with no task links
-      if (selectedTaskId === '-1') {
-        if (!subdatasetLinks) return false
-        let isUnassigned = true
-        if (subdataset.id in subdatasetLinks) {
-          isUnassigned = subdatasetLinks[subdataset.id].length === 0
-        }
-        return matchesSearch && isUnassigned
-      }
       return matchesSearch
     })
     .sort((a, b) => b.name.localeCompare(a.name))
