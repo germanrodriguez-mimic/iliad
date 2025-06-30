@@ -34,13 +34,19 @@ interface RawEpisode {
   uploaded_at: string
 }
 
+interface ConversionVersion {
+  id: number;
+  version: string;
+}
+
 interface ProcessedEpisode {
-  id: number
-  subdataset_id: number
-  raw_episode_id: number
-  conversion_version_id: number
-  url: string | null
-  uploaded_at: string
+  id: number;
+  subdataset_id: number;
+  raw_episode_id: number;
+  conversion_version_id: number;
+  url: string | null;
+  uploaded_at: string;
+  conversion_version?: ConversionVersion;
 }
 
 interface SubdatasetDetail {
@@ -216,8 +222,10 @@ const SubdatasetDetailPage: React.FC = () => {
                         </div>
                       )}
                       <div className="flex flex-wrap gap-4 text-xs">
-                        <div><span className="font-bold">Raw Episode ID:</span> {ep.raw_episode_id}</div>
-                        <div><span className="font-bold">Conversion Version ID:</span> {ep.conversion_version_id}</div>
+                        <div>
+                          <span className="font-bold">Conversion Version:</span>{' '}
+                          {ep.conversion_version?.version || 'N/A'}
+                        </div>
                         <div><span className="font-bold">Uploaded At:</span> {ep.uploaded_at ? new Date(ep.uploaded_at).toLocaleString() : 'N/A'}</div>
                         {/* Optionally show label from raw episode */}
                         {rawEpisodes && (

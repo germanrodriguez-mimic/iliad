@@ -9,6 +9,7 @@ from app.models.evaluation import Evaluation
 from app.models.tasks_to_subdatasets import TasksToSubdatasets
 from app.models.episode import Episode
 from app.models.task_variants_to_subdatasets import TaskVariantsToSubdatasets
+from app.models.episode_conversion_version import EpisodeConversionVersion
 
 __all__ = [
     "Task",
@@ -22,5 +23,6 @@ __all__ = [
     "Evaluation",
     "TasksToSubdatasets",
     "TaskVariantsToSubdatasets",
-    "Episode"
+    "Episode",
+    "EpisodeConversionVersion"
 ] 

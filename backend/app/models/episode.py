@@ -1,6 +1,7 @@
 from sqlalchemy import Column, Integer, String, ForeignKey, DateTime
 from sqlalchemy.orm import relationship
 from app.db.session import Base
+from app.models.episode_conversion_version import EpisodeConversionVersion
 
 class Episode(Base):
     __tablename__ = "episodes"
@@ -14,4 +15,9 @@ class Episode(Base):
     uploaded_at = Column(DateTime(timezone=True))
 
     # Relationships
-    # (Add relationships if needed, e.g., to Subdataset, RawEpisode, ConversionVersion) 
+    # (Add relationships if needed, e.g., to Subdataset, RawEpisode, ConversionVersion)
+    conversion_version = relationship(
+        "EpisodeConversionVersion",
+        primaryjoin="Episode.conversion_version_id==EpisodeConversionVersion.id",
+        lazy="joined"
+    ) 
