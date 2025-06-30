@@ -1,5 +1,5 @@
 import React, { useState } from 'react'
-import { useParams, Link } from 'react-router-dom'
+import { useParams, Link, useNavigate } from 'react-router-dom'
 import { useQuery } from '@tanstack/react-query'
 import axios from 'axios'
 
@@ -66,6 +66,8 @@ const SubdatasetDetailPage: React.FC = () => {
   const [showProcessedEpisodes, setShowProcessedEpisodes] = useState(false)
   const [showTasks, setShowTasks] = useState(true)
 
+  const navigate = useNavigate()
+
   // Fetch subdataset info
   const { data: subdataset, isLoading: loadingSubdataset } = useQuery<SubdatasetDetail>({
     queryKey: ['subdataset-detail', subdatasetId],
@@ -105,6 +107,46 @@ const SubdatasetDetailPage: React.FC = () => {
     },
     enabled: !!subdatasetId
   })
+
+  // Fetch all tasks and variants for linking
+  const { data: allTasks, isLoading: loadingAllTasks } = useQuery<Task[]>({
+    queryKey: ['all-tasks-for-linking'],
+    queryFn: async () => {
+      const response = await axios.get('http://localhost:8000/api/v1/tasks/')
+      return response.data
+    },
+    enabled: !linkedTasks || linkedTasks.length === 0,
+  })
+
+  // State for selected task/variant
+  const [selectedTaskId, setSelectedTaskId] = useState<string>('')
+  const [selectedVariantId, setSelectedVariantId] = useState<string>('')
+  const [linking, setLinking] = useState(false)
+  const [linkError, setLinkError] = useState<string | null>(null)
+  const [linkSuccess, setLinkSuccess] = useState<string | null>(null)
+
+  // Find variants for selected task
+  const selectedTask = allTasks?.find(t => t.id === Number(selectedTaskId))
+  const variants = selectedTask?.variants || []
+
+  // Link handler
+  const handleLink = async () => {
+    setLinking(true)
+    setLinkError(null)
+    setLinkSuccess(null)
+    try {
+      await axios.post(`http://localhost:8000/api/v1/subdatasets/${subdatasetId}/link_task_variant/`, {
+        task_variant_id: Number(selectedVariantId),
+      })
+      setLinkSuccess('Successfully linked!')
+      // Optionally refetch linked tasks
+      window.location.reload()
+    } catch (err: any) {
+      setLinkError(err?.response?.data?.detail || 'Failed to link')
+    } finally {
+      setLinking(false)
+    }
+  }
 
   // Compute raw episode stats
   const rawStats = React.useMemo(() => {
@@ -182,7 +224,17 @@ const SubdatasetDetailPage: React.FC = () => {
                   </li>
                 ))}
               </ul>
-            ) : <div className="text-gray-400">No linked tasks.</div>
+            ) : (
+              <div className="text-gray-400 flex items-center gap-4">
+                No linked tasks.
+                <span
+                  className="text-accent cursor-pointer hover:underline"
+                  onClick={() => navigate(`/subdatasets/${subdatasetId}/link-task-variant`)}
+                >
+                  Link to Task Variant
+                </span>
+              </div>
+            )
           )
         )}
       </section>

@@ -1,3 +1,4 @@
+import React from 'react'
 import { Routes, Route, Link } from 'react-router-dom'
 import TasksPage from './pages/TasksPage'
 import SubdatasetsPage from './pages/SubdatasetsPage'
@@ -6,6 +7,7 @@ import TaskEditPage from './pages/TaskEditPage'
 import TaskCreatePage from './pages/TaskCreatePage'
 import TaskVariantCreatePage from './pages/TaskVariantCreatePage'
 import SubdatasetDetailPage from './pages/SubdatasetDetailPage'
+import SubdatasetLinkTaskVariantPage from './pages/SubdatasetLinkTaskVariantPage'
 
 function App() {
   return (
@@ -34,6 +36,7 @@ function App() {
           <Route path="/tasks/:taskId" element={<TaskDetailPage />} />
           <Route path="/tasks/:taskId/edit" element={<TaskEditPage />} />
           <Route path="/subdatasets/:subdatasetId" element={<SubdatasetDetailPage />} />
+          <Route path="/subdatasets/:subdatasetId/link-task-variant" element={<SubdatasetLinkTaskVariantPage />} />
         </Routes>
       </main>
     </div>

@@ -1,5 +1,5 @@
 from typing import List, Optional
-from fastapi import APIRouter, Depends, HTTPException, Query
+from fastapi import APIRouter, Depends, HTTPException, Query, Body
 from sqlalchemy.orm import Session
 
 from app.db.session import get_db
@@ -11,6 +11,7 @@ from app.schemas.subdataset import (
 )
 from app.schemas.episode import Episode
 from app.schemas.task import Task
+from app.models.task_variants_to_subdatasets import TaskVariantsToSubdatasets
 
 router = APIRouter()
 
@@ -239,4 +240,28 @@ def read_linked_tasks(
     """
     Retrieve the single task (and its linked variant) for a subdataset.
     """
-    return crud.get_linked_task_and_variant_by_subdataset(db=db, subdataset_id=subdataset_id) 
+    return crud.get_linked_task_and_variant_by_subdataset(db=db, subdataset_id=subdataset_id)
+
+@router.post("/{subdataset_id}/link_task_variant/")
+def link_subdataset_to_task_variant(
+    *,
+    db: Session = Depends(get_db),
+    subdataset_id: int,
+    data: dict = Body(...)
+):
+    """
+    Link a subdataset to a task variant. Only one link allowed per subdataset.
+    """
+    task_variant_id = data.get("task_variant_id")
+    if not task_variant_id:
+        raise HTTPException(status_code=400, detail="task_variant_id is required")
+    # Check if already linked
+    existing = db.query(TaskVariantsToSubdatasets).filter(TaskVariantsToSubdatasets.subdataset_id == subdataset_id).first()
+    if existing:
+        raise HTTPException(status_code=400, detail="Subdataset is already linked to a task variant")
+    # Create the link
+    link = TaskVariantsToSubdatasets(task_variant_id=task_variant_id, subdataset_id=subdataset_id)
+    db.add(link)
+    db.commit()
+    db.refresh(link)
+    return {"success": True, "message": "Linked subdataset to task variant"} 
