@@ -77,8 +77,8 @@ interface Subdataset {
 function SubdatasetsPage() {
   const [expandedSubdatasetId, setExpandedSubdatasetId] = useState<number | null>(null)
   const [search, setSearch] = useState('')
-  const [selectedTaskId, setSelectedTaskId] = useState<number | null>(null)
-  const [selectedVariantId, setSelectedVariantId] = useState<number | null>(null)
+  const [selectedTaskId, setSelectedTaskId] = useState<string>('')
+  const [selectedVariantId, setSelectedVariantId] = useState<string>('')
 
   // Fetch all tasks for filter dropdown
   const { data: tasks, isLoading: loadingTasks } = useQuery<Task[]>({
@@ -93,11 +93,11 @@ function SubdatasetsPage() {
   const { data: variants, isLoading: loadingVariants } = useQuery<TaskVariant[]>({
     queryKey: ['task-variants', selectedTaskId],
     queryFn: async () => {
-      if (!selectedTaskId) return []
-      const response = await axios.get(`http://localhost:8000/api/v1/tasks/${selectedTaskId}/variants/`)
+      if (!selectedTaskId || selectedTaskId === '-1') return []
+      const response = await axios.get(`http://localhost:8000/api/v1/tasks/${parseInt(selectedTaskId)}/variants/`)
       return response.data
     },
-    enabled: !!selectedTaskId
+    enabled: !!selectedTaskId && selectedTaskId !== '-1'
   })
 
   // Query for subdataset list, filtered by task/variant
@@ -106,17 +106,26 @@ function SubdatasetsPage() {
     queryFn: async () => {
       let url = 'http://localhost:8000/api/v1/subdatasets/list'
       const params = []
-      if (selectedTaskId) params.push(`task_id=${selectedTaskId}`)
-      if (selectedVariantId) params.push(`variant_id=${selectedVariantId}`)
+      if (selectedTaskId && selectedTaskId !== '-1') params.push(`task_id=${parseInt(selectedTaskId)}`)
+      if (selectedVariantId) params.push(`variant_id=${parseInt(selectedVariantId)}`)
       if (params.length > 0) url += '?' + params.join('&')
       const response = await axios.get(url)
       return response.data
     }
   })
 
+  // Query for subdataset-to-task links for all subdatasets (for unassigned filter)
+  const { data: subdatasetLinks } = useQuery<{ [subdatasetId: number]: number[] }>({
+    queryKey: ['subdataset-task-links'],
+    queryFn: async () => {
+      const response = await axios.get('http://localhost:8000/api/v1/subdatasets/task_links')
+      return response.data // { [subdatasetId]: [taskVariantId, ...] }
+    }
+  })
+
   // Reset variant filter if task changes
   useEffect(() => {
-    setSelectedVariantId(null)
+    setSelectedVariantId('')
   }, [selectedTaskId])
 
   // Query for expanded subdataset details
@@ -141,11 +150,21 @@ function SubdatasetsPage() {
     enabled: !!expandedSubdatasetId
   })
 
-  // Filter subdatasets by search and sort in reverse alphabetical order
+  // Filter subdatasets by search, task, and sort in reverse alphabetical order
   const filteredSubdatasets = subdatasets
-    ?.filter((subdataset) =>
-      subdataset.name.toLowerCase().includes(search.toLowerCase())
-    )
+    ?.filter((subdataset) => {
+      const matchesSearch = subdataset.name.toLowerCase().includes(search.toLowerCase())
+      // If 'Unassigned' is selected, show only subdatasets with no task links
+      if (selectedTaskId === '-1') {
+        if (!subdatasetLinks) return false
+        let isUnassigned = true
+        if (subdataset.id in subdatasetLinks) {
+          isUnassigned = subdatasetLinks[subdataset.id].length === 0
+        }
+        return matchesSearch && isUnassigned
+      }
+      return matchesSearch
+    })
     .sort((a, b) => b.name.localeCompare(a.name))
 
   if (isLoading || loadingTasks) {
@@ -166,19 +185,20 @@ function SubdatasetsPage() {
       <div className="mb-4 flex gap-4 items-center">
         <select
           className="px-2 py-1 rounded border border-border bg-background text-white text-sm focus:outline-none focus:ring-2 focus:ring-accent"
-          value={selectedTaskId !== null ? String(selectedTaskId) : ''}
-          onChange={e => setSelectedTaskId(e.target.value ? parseInt(e.target.value) : null)}
+          value={selectedTaskId}
+          onChange={e => setSelectedTaskId(e.target.value)}
         >
           <option value="">Filter by Task</option>
+          <option value="-1">Unassigned (no task)</option>
           {tasks?.map(task => (
             <option key={task.id} value={String(task.id)}>{task.name}</option>
           ))}
         </select>
         <select
           className="px-2 py-1 rounded border border-border bg-background text-white text-sm focus:outline-none focus:ring-2 focus:ring-accent"
-          value={selectedVariantId !== null ? String(selectedVariantId) : ''}
-          onChange={e => setSelectedVariantId(e.target.value ? parseInt(e.target.value) : null)}
-          disabled={!selectedTaskId || loadingVariants}
+          value={selectedVariantId as string}
+          onChange={e => setSelectedVariantId(e.target.value)}
+          disabled={!selectedTaskId || selectedTaskId === '-1' || loadingVariants}
         >
           <option value="">Filter by Variant</option>
           {variants?.map(variant => (
