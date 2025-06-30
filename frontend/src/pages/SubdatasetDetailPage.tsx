@@ -181,43 +181,6 @@ const SubdatasetDetailPage: React.FC = () => {
         )}
       </section>
 
-      {/* Raw Episodes */}
-      <section className="mb-8">
-        <button
-          className="w-full text-left font-bold flex justify-between items-center hover:text-accent mb-2"
-          onClick={() => setShowRawEpisodes((v) => !v)}
-        >
-          Raw Episodes ({rawEpisodes ? rawEpisodes.length : 0})
-          <span className="ml-2 text-xs">{showRawEpisodes ? '▲' : '▼'}</span>
-        </button>
-        {showRawEpisodes && (
-          <>
-            <div className="mb-2 text-sm text-gray-400">
-              <span className="mr-4">Total: {rawStats.total}</span>
-              <span className="mr-4">Good: {rawStats.good}</span>
-              <span>Bad: {rawStats.bad}</span>
-            </div>
-            {loadingRawEpisodes ? <div className="text-gray-400">Loading raw episodes...</div> : (
-              rawEpisodes && rawEpisodes.length > 0 ? (
-                <ul className="space-y-2 max-h-80 overflow-y-auto pr-2">
-                  {rawEpisodes.map(ep => (
-                    <li key={ep.id} className="border border-border rounded p-3 bg-background">
-                      <div className="flex flex-wrap gap-4 text-xs">
-                        <div><span className="font-bold">Operator:</span> {ep.operator || 'N/A'}</div>
-                        <div><span className="font-bold">Label:</span> {ep.label || 'N/A'}</div>
-                        <div><span className="font-bold">Recorded At:</span> {ep.recorded_at ? new Date(ep.recorded_at).toLocaleString() : 'N/A'}</div>
-                        <div><span className="font-bold">Uploaded At:</span> {new Date(ep.uploaded_at).toLocaleString()}</div>
-                      </div>
-                      {ep.url && <div className="mt-2"><a href={ep.url} target="_blank" rel="noopener noreferrer" className="text-accent hover:underline">View Episode</a></div>}
-                    </li>
-                  ))}
-                </ul>
-              ) : <div className="text-gray-400">No raw episodes.</div>
-            )}
-          </>
-        )}
-      </section>
-
       {/* Processed Episodes */}
       <section className="mb-8">
         <button
@@ -253,6 +216,43 @@ const SubdatasetDetailPage: React.FC = () => {
                   ))}
                 </ul>
               ) : <div className="text-gray-400">No processed episodes.</div>
+            )}
+          </>
+        )}
+      </section>
+
+      {/* Raw Episodes */}
+      <section className="mb-8">
+        <button
+          className="w-full text-left font-bold flex justify-between items-center hover:text-accent mb-2"
+          onClick={() => setShowRawEpisodes((v) => !v)}
+        >
+          Raw Episodes ({rawEpisodes ? rawEpisodes.length : 0})
+          <span className="ml-2 text-xs">{showRawEpisodes ? '▲' : '▼'}</span>
+        </button>
+        {showRawEpisodes && (
+          <>
+            <div className="mb-2 text-sm text-gray-400">
+              <span className="mr-4">Total: {rawStats.total}</span>
+              <span className="mr-4">Good: {rawStats.good}</span>
+              <span>Bad: {rawStats.bad}</span>
+            </div>
+            {loadingRawEpisodes ? <div className="text-gray-400">Loading raw episodes...</div> : (
+              rawEpisodes && rawEpisodes.length > 0 ? (
+                <ul className="space-y-2 max-h-80 overflow-y-auto pr-2">
+                  {rawEpisodes.map(ep => (
+                    <li key={ep.id} className="border border-border rounded p-3 bg-background">
+                      <div className="flex flex-wrap gap-4 text-xs">
+                        <div><span className="font-bold">Operator:</span> {ep.operator || 'N/A'}</div>
+                        <div><span className="font-bold">Label:</span> {ep.label || 'N/A'}</div>
+                        <div><span className="font-bold">Recorded At:</span> {ep.recorded_at ? new Date(ep.recorded_at).toLocaleString() : 'N/A'}</div>
+                        <div><span className="font-bold">Uploaded At:</span> {new Date(ep.uploaded_at).toLocaleString()}</div>
+                      </div>
+                      {ep.url && <div className="mt-2"><a href={ep.url} target="_blank" rel="noopener noreferrer" className="text-accent hover:underline">View Episode</a></div>}
+                    </li>
+                  ))}
+                </ul>
+              ) : <div className="text-gray-400">No raw episodes.</div>
             )}
           </>
         )}
