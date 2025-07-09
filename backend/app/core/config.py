@@ -6,12 +6,19 @@ class Settings(BaseSettings):
     VERSION: str = "1.0.0"
     API_V1_STR: str = "/api/v1"
     
-    DATABASE_URL: str
+    # Database configuration
+    CLOUDSQL_INSTANCE: str  # Format: project:region:instance
+    DB_NAME: str
+    DB_USER: str
+    DB_PASSWORD: str
+    
+    # Connection pool settings for better performance
+    DB_POOL_SIZE: int = 10
+    DB_MAX_OVERFLOW: int = 20
+    DB_POOL_TIMEOUT: int = 30
+    DB_POOL_RECYCLE: int = 3600  # 1 hour
+    
     GCP_MEDIA_BUCKET_NAME: str
-
-    @property
-    def get_database_url(self) -> str:
-        return self.DATABASE_URL
 
     class Config:
         env_file = ".env"
