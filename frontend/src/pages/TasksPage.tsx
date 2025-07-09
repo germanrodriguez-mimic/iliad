@@ -190,7 +190,6 @@ function TasksPage() {
       <div className="flex justify-between items-center mb-8 px-4">
         <h1 className="text-3xl">Tasks</h1>
         <div className="space-x-4">
-          <Link to="/items" className="action-button py-2 px-4">Manage Items</Link>
           <Link to="/tasks/create" className="action-button py-2 px-4">Add New Task</Link>
           <Link to="/tasks/variants/create" className="action-button py-2 px-4">Add Task Variant</Link>
         </div>

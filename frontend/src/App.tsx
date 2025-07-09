@@ -24,9 +24,10 @@ function App() {
           <Route path="/" element={
             <div className="max-w-6xl mx-auto">
               <h1 className="text-4xl mb-12 text-center">Welcome to the mimic hub</h1>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-8 max-w-2xl mx-auto">
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-3xl mx-auto">
                 <Link to="/tasks" className="action-button">Manage Tasks</Link>
                 <Link to="/subdatasets" className="action-button">Manage Subdatasets</Link>
+                <Link to="/items" className="action-button">Manage Items</Link>
               </div>
             </div>
           } />
