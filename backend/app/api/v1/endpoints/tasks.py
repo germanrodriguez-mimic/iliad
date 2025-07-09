@@ -9,6 +9,7 @@ from app.schemas.task import (
     TaskVariant, TaskVariantCreate, TaskVariantUpdate,
     TaskList, TaskDetailSummary
 )
+from app.schemas.item import TaskVariantItemInfo
 
 router = APIRouter()
 
@@ -130,4 +131,37 @@ def read_task_detail(task_id: int, db: Session = Depends(get_db)):
     summary = crud.get_task_detail_summary(db=db, task_id=task_id)
     if summary is None:
         raise HTTPException(status_code=404, detail="Task not found")
-    return summary 
+    return summary
+
+# Task Variant Items endpoints
+@router.post("/variants/{variant_id}/items/")
+def add_item_to_variant(
+    variant_id: int,
+    item_data: dict,  # {"item_id": int, "quantity": int}
+    db: Session = Depends(get_db)
+):
+    success = crud.add_item_to_variant(db=db, variant_id=variant_id, item_id=item_data["item_id"], quantity=item_data.get("quantity", 1))
+    if not success:
+        raise HTTPException(status_code=404, detail="Task variant or item not found")
+    return {"message": "Item added to variant successfully"}
+
+@router.delete("/variants/{variant_id}/items/{item_id}")
+def remove_item_from_variant(
+    variant_id: int,
+    item_id: int,
+    db: Session = Depends(get_db)
+):
+    success = crud.remove_item_from_variant(db=db, variant_id=variant_id, item_id=item_id)
+    if not success:
+        raise HTTPException(status_code=404, detail="Task variant or item not found")
+    return {"message": "Item removed from variant successfully"}
+
+@router.get("/variants/{variant_id}/items/", response_model=List[TaskVariantItemInfo])
+def get_variant_items(
+    variant_id: int,
+    db: Session = Depends(get_db)
+):
+    items = crud.get_variant_items(db=db, variant_id=variant_id)
+    if items is None:
+        raise HTTPException(status_code=404, detail="Task variant not found")
+    return items 

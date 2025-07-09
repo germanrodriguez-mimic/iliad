@@ -2,6 +2,7 @@ import React, { useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import axios from 'axios'
+import ItemSelector from '../components/ItemSelector'
 
 interface TaskList {
   id: number
@@ -11,11 +12,20 @@ interface TaskList {
   is_external: boolean
 }
 
+interface TaskVariantItemInfo {
+  item_id: number
+  item_name: string
+  quantity: number
+  url?: string
+  images?: string[]
+  notes?: string
+}
+
 interface TaskVariant {
   id: number
   name: string
   description: string | null
-  items: string | null
+  items: TaskVariantItemInfo[] | null
   embodiment_id: number | null
   teleop_mode_id: number | null
   notes: string | null
@@ -30,7 +40,7 @@ const TaskVariantCreatePage: React.FC = () => {
   const [selectedTaskId, setSelectedTaskId] = useState<number | null>(null)
   const [name, setName] = useState<string>('')
   const [description, setDescription] = useState<string>('')
-  const [items, setItems] = useState<string>('')
+  const [items, setItems] = useState<TaskVariantItemInfo[]>([])
   const [notes, setNotes] = useState<string>('')
   const [media, setMedia] = useState<string>('')
 
@@ -56,11 +66,19 @@ const TaskVariantCreatePage: React.FC = () => {
 
   // Create task variant mutation
   const createVariantMutation = useMutation({
-    mutationFn: async (variantData: { name: string; description: string; items: string; notes: string; media: string[] }) => {
+    mutationFn: async (variantData: { name: string; description: string; notes: string; media: string[] }) => {
       const response = await axios.post(`http://localhost:8000/api/v1/tasks/${selectedTaskId}/variants/`, variantData)
       return response.data
     },
-    onSuccess: () => {
+    onSuccess: async (createdVariant) => {
+      // Add items to the variant
+      for (const item of items) {
+        await axios.post(`http://localhost:8000/api/v1/tasks/variants/${createdVariant.id}/items/`, {
+          item_id: item.item_id,
+          quantity: item.quantity
+        })
+      }
+      
       queryClient.invalidateQueries(['task-variants', selectedTaskId])
       queryClient.invalidateQueries(['task-detail', selectedTaskId])
       navigate(`/tasks/${selectedTaskId}`)
@@ -92,7 +110,6 @@ const TaskVariantCreatePage: React.FC = () => {
     createVariantMutation.mutate({
       name: name.trim(),
       description: description.trim(),
-      items: items.trim(),
       notes: notes.trim(),
       media: mediaArray
     })
@@ -187,12 +204,9 @@ const TaskVariantCreatePage: React.FC = () => {
         
         <div>
           <label className="block font-semibold mb-1">Items</label>
-          <input
-            type="text"
-            className="w-full border border-border rounded px-3 py-2 bg-background text-white focus:outline-none focus:ring-2 focus:ring-accent"
-            value={items}
-            onChange={e => setItems(e.target.value)}
-            placeholder="Enter items (e.g., objects, tools needed)"
+          <ItemSelector
+            selectedItems={items}
+            onItemsChange={setItems}
           />
         </div>
         

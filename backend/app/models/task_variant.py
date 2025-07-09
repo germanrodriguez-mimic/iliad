@@ -11,7 +11,6 @@ class TaskVariant(Base):
     task_id = Column(Integer, ForeignKey("preproduction.tasks.id", ondelete="CASCADE"))
     name = Column(String)
     description = Column(String)
-    items = Column(String)
     embodiment_id = Column(Integer, ForeignKey("preproduction.embodiments.id", ondelete="SET NULL"), nullable=True)
     teleop_mode_id = Column(Integer, ForeignKey("preproduction.teleop_modes.id", ondelete="SET NULL"), nullable=True)
     notes = Column(String)
@@ -20,4 +19,5 @@ class TaskVariant(Base):
     # Relationships
     task = relationship("Task", back_populates="variants")
     embodiment = relationship("Embodiment")
-    teleop_mode = relationship("TeleopMode") 
+    teleop_mode = relationship("TeleopMode")
+    item_links = relationship("TaskVariantToItems", back_populates="task_variant", cascade="all, delete-orphan") 

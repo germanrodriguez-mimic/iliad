@@ -1,7 +1,7 @@
-import React, { useState, useEffect } from 'react'
-import { useQuery } from '@tanstack/react-query'
-import axios from 'axios'
+import React, { useState, useEffect, useRef } from 'react'
 import { Link } from 'react-router-dom'
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
+import axios from 'axios'
 
 interface EmbodimentInfo {
   id: number
@@ -20,8 +20,8 @@ interface SubdatasetList {
   notes: string | null
   embodiment_id: number | null
   teleop_mode_id: number | null
-  embodiment: EmbodimentInfo | null
-  teleop_mode: TeleopModeInfo | null
+  embodiment?: { id: number; name: string } | null
+  teleop_mode?: { id: number; name: string } | null
 }
 
 interface EpisodeStats {
@@ -40,11 +40,20 @@ interface RawEpisode {
   uploaded_at: string
 }
 
+interface TaskVariantItemInfo {
+  item_id: number
+  item_name: string
+  quantity: number
+  url?: string
+  images?: string[]
+  notes?: string
+}
+
 interface TaskVariant {
   id: number
   name: string
   description: string | null
-  items: string | null
+  items: TaskVariantItemInfo[] | null
   embodiment_id: number | null
   teleop_mode_id: number | null
   notes: string | null

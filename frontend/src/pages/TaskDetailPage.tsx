@@ -4,11 +4,20 @@ import { useQuery } from '@tanstack/react-query'
 import axios from 'axios'
 import ConfigurationImages from '../components/ConfigurationImages'
 
+interface TaskVariantItemInfo {
+  item_id: number
+  item_name: string
+  quantity: number
+  url?: string
+  images?: string[]
+  notes?: string
+}
+
 interface TaskVariant {
   id: number
   name: string
   description: string | null
-  items: string | null
+  items: TaskVariantItemInfo[] | null
   embodiment_id: number | null
   teleop_mode_id: number | null
   embodiment?: { id: number; name: string } | null
@@ -116,7 +125,24 @@ const TaskDetailPage: React.FC = () => {
                 {expandedVariantId === variant.id && (
                   <div className="mt-2 space-y-2">
                     {variant.description && <div className="text-gray-300 text-sm">{variant.description}</div>}
-                    {variant.items && <div className="text-xs text-gray-400">Items: {variant.items}</div>}
+                    {variant.items && variant.items.length > 0 && (
+                      <div className="text-xs text-gray-400">
+                        <div className="font-semibold mb-1">Items:</div>
+                        <ul className="ml-2 space-y-1">
+                          {variant.items.map((item, index) => (
+                            <li key={index} className="flex items-center gap-2">
+                              <span className="text-accent">{item.quantity}x</span>
+                              <span>{item.item_name}</span>
+                              {item.url && (
+                                <a href={item.url} target="_blank" rel="noopener noreferrer" className="text-accent hover:underline text-xs">
+                                  [Link]
+                                </a>
+                              )}
+                            </li>
+                          ))}
+                        </ul>
+                      </div>
+                    )}
                     {variant.embodiment && <div className="text-xs text-gray-400">Embodiment: {variant.embodiment.name}</div>}
                     {variant.teleop_mode && <div className="text-xs text-gray-400">Teleop Mode: {variant.teleop_mode.name}</div>}
                     {variant.notes && <div className="text-xs text-gray-400">Notes: {variant.notes}</div>}

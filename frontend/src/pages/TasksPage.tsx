@@ -9,6 +9,29 @@ interface TaskList {
   status: string
   created_at: string
   is_external: boolean
+  variants?: TaskVariant[]
+}
+
+interface TaskVariantItemInfo {
+  item_id: number
+  item_name: string
+  quantity: number
+  url?: string
+  images?: string[]
+  notes?: string
+}
+
+interface TaskVariant {
+  id: number
+  name: string
+  description: string
+  items: TaskVariantItemInfo[] | null
+  embodiment_id: number | null
+  teleop_mode_id: number | null
+  embodiment?: { id: number; name: string } | null
+  teleop_mode?: { id: number; name: string } | null
+  notes: string
+  media: string[]
 }
 
 interface Task {
@@ -18,20 +41,7 @@ interface Task {
   status: string
   created_at: string
   is_external: boolean
-  variants?: TaskVariant[]
-}
-
-interface TaskVariant {
-  id: number
-  name: string
-  description: string
-  items: string
-  embodiment_id: number | null
-  teleop_mode_id: number | null
-  embodiment?: { id: number; name: string } | null
-  teleop_mode?: { id: number; name: string } | null
-  notes: string
-  media: string[]
+  variants: TaskVariant[]
 }
 
 function TasksPage() {
@@ -180,6 +190,7 @@ function TasksPage() {
       <div className="flex justify-between items-center mb-8 px-4">
         <h1 className="text-3xl">Tasks</h1>
         <div className="space-x-4">
+          <Link to="/items" className="action-button py-2 px-4">Manage Items</Link>
           <Link to="/tasks/create" className="action-button py-2 px-4">Add New Task</Link>
           <Link to="/tasks/variants/create" className="action-button py-2 px-4">Add Task Variant</Link>
         </div>
@@ -302,10 +313,33 @@ function TasksPage() {
                                           <p className="text-gray-300 mt-1 text-xs">{variant.description}</p>
                                         </div>
 
-                                        {variant.items && (
+                                        {variant.items && variant.items.length > 0 && (
                                           <div>
                                             <span className="font-bold">Items: </span>
-                                            <p className="text-gray-300 mt-1 text-xs">{variant.items}</p>
+                                            <div className="space-y-1 text-xs">
+                                              {variant.items.map((item, index) => (
+                                                <div key={index} className="flex items-center gap-1">
+                                                  <span>{item.quantity}x</span>
+                                                  <span>{item.item_name}</span>
+                                                  {item.url && (
+                                                    <a
+                                                      href={item.url}
+                                                      target="_blank"
+                                                      rel="noopener noreferrer"
+                                                      className="text-accent hover:underline"
+                                                    >
+                                                      (Link)
+                                                    </a>
+                                                  )}
+                                                  {item.images && item.images.length > 0 && (
+                                                    <span className="text-gray-400 text-xs">({item.images.length} images)</span>
+                                                  )}
+                                                  {item.notes && (
+                                                    <span className="text-gray-400 text-xs">({item.notes})</span>
+                                                  )}
+                                                </div>
+                                              ))}
+                                            </div>
                                           </div>
                                         )}
 

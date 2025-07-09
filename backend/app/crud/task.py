@@ -4,7 +4,10 @@ from sqlalchemy import and_
 
 from app.models.task import Task
 from app.models.task_variant import TaskVariant
+from app.models.task_variant_to_items import TaskVariantToItems
+from app.models.item import Item
 from app.schemas.task import TaskCreate, TaskUpdate, TaskVariantCreate, TaskVariantUpdate, TaskDetailSummary, TaskVariantSubdatasets
+from app.schemas.item import TaskVariantItemInfo
 from app.models.tasks_to_subdatasets import TasksToSubdatasets
 from app.models.subdataset import Subdataset
 from app.models.training_run import TrainingRun, TrainingRunsToTasks
@@ -74,7 +77,6 @@ def create_task_variant(db: Session, task_id: int, variant: TaskVariantCreate) -
         task_id=task_id,
         name=variant.name,
         description=variant.description,
-        items=variant.items,
         embodiment_id=variant.embodiment_id,
         teleop_mode_id=variant.teleop_mode_id,
         notes=variant.notes,
@@ -146,10 +148,26 @@ def get_task_detail_summary(db: Session, task_id: int) -> TaskDetailSummary:
         return {k: v for k, v in obj.__dict__.items() if not k.startswith('_sa_')}
 
     def variant_to_summary(variant):
+        # Get items for this variant
+        item_links = db.query(TaskVariantToItems).filter(TaskVariantToItems.task_variant_id == variant.id).all()
+        items = []
+        for link in item_links:
+            item = db.query(Item).filter(Item.id == link.item_id).first()
+            if item:
+                items.append(TaskVariantItemInfo(
+                    item_id=item.id,
+                    item_name=item.name,
+                    quantity=link.quantity,
+                    url=item.url,
+                    images=item.images,
+                    notes=item.notes
+                ))
+        
         return {
             **variant.__dict__,
             "embodiment": EmbodimentInfo.model_validate(orm_to_dict(variant.embodiment)) if variant.embodiment else None,
             "teleop_mode": TeleopModeInfo.model_validate(orm_to_dict(variant.teleop_mode)) if variant.teleop_mode else None,
+            "items": items
         }
 
     subdatasets_by_variant = []
@@ -191,4 +209,75 @@ def get_task_detail_summary(db: Session, task_id: int) -> TaskDetailSummary:
         subdatasets_by_variant=subdatasets_by_variant,
         training_runs=[TrainingRunSummary.model_validate(tr) for tr in training_runs],
         evaluations=[EvaluationSummary.model_validate(ev) for ev in evaluations],
-    ) 
+    )
+
+# Task Variant Items CRUD operations
+def add_item_to_variant(db: Session, variant_id: int, item_id: int, quantity: int = 1) -> bool:
+    # Verify variant and item exist
+    variant = get_task_variant(db, variant_id)
+    item = db.query(Item).filter(Item.id == item_id).first()
+    if not variant or not item:
+        return False
+    
+    # Check if relationship already exists
+    existing = db.query(TaskVariantToItems).filter(
+        TaskVariantToItems.task_variant_id == variant_id,
+        TaskVariantToItems.item_id == item_id
+    ).first()
+    
+    if existing:
+        # Update quantity
+        existing.quantity = quantity
+    else:
+        # Create new relationship
+        db_item_link = TaskVariantToItems(
+            task_variant_id=variant_id,
+            item_id=item_id,
+            quantity=quantity
+        )
+        db.add(db_item_link)
+    
+    db.commit()
+    return True
+
+def remove_item_from_variant(db: Session, variant_id: int, item_id: int) -> bool:
+    # Verify variant exists
+    variant = get_task_variant(db, variant_id)
+    if not variant:
+        return False
+    
+    # Find and delete the relationship
+    item_link = db.query(TaskVariantToItems).filter(
+        TaskVariantToItems.task_variant_id == variant_id,
+        TaskVariantToItems.item_id == item_id
+    ).first()
+    
+    if not item_link:
+        return False
+    
+    db.delete(item_link)
+    db.commit()
+    return True
+
+def get_variant_items(db: Session, variant_id: int) -> Optional[List[TaskVariantItemInfo]]:
+    # Verify variant exists
+    variant = get_task_variant(db, variant_id)
+    if not variant:
+        return None
+    
+    # Get items for this variant
+    item_links = db.query(TaskVariantToItems).filter(TaskVariantToItems.task_variant_id == variant_id).all()
+    items = []
+    for link in item_links:
+        item = db.query(Item).filter(Item.id == link.item_id).first()
+        if item:
+            items.append(TaskVariantItemInfo(
+                item_id=item.id,
+                item_name=item.name,
+                quantity=link.quantity,
+                url=item.url,
+                images=item.images,
+                notes=item.notes
+            ))
+    
+    return items 

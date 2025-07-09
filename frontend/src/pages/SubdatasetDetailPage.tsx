@@ -3,11 +3,20 @@ import { useParams, Link, useNavigate } from 'react-router-dom'
 import { useQuery } from '@tanstack/react-query'
 import axios from 'axios'
 
+interface TaskVariantItemInfo {
+  item_id: number
+  item_name: string
+  quantity: number
+  url?: string
+  images?: string[]
+  notes?: string
+}
+
 interface TaskVariant {
   id: number
   name: string
   description: string | null
-  items: string | null
+  items: TaskVariantItemInfo[] | null
   embodiment_id: number | null
   teleop_mode_id: number | null
   notes: string | null

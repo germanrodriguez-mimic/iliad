@@ -10,6 +10,8 @@ from app.models.tasks_to_subdatasets import TasksToSubdatasets
 from app.models.episode import Episode
 from app.models.task_variants_to_subdatasets import TaskVariantsToSubdatasets
 from app.models.episode_conversion_version import EpisodeConversionVersion
+from app.models.item import Item
+from app.models.task_variant_to_items import TaskVariantToItems
 
 __all__ = [
     "Task",
@@ -24,5 +26,7 @@ __all__ = [
     "TasksToSubdatasets",
     "TaskVariantsToSubdatasets",
     "Episode",
-    "EpisodeConversionVersion"
+    "EpisodeConversionVersion",
+    "Item",
+    "TaskVariantToItems"
 ] 

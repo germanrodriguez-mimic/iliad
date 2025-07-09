@@ -4,11 +4,11 @@ from pydantic import BaseModel
 from app.schemas.subdataset import SubdatasetList, EmbodimentInfo, TeleopModeInfo
 from app.schemas.training_run import TrainingRunSummary
 from app.schemas.evaluation import EvaluationSummary
+from app.schemas.item import TaskVariantItemInfo
 
 class TaskVariantBase(BaseModel):
     name: str
     description: Optional[str] = None
-    items: Optional[str] = None
     embodiment_id: Optional[int] = None
     teleop_mode_id: Optional[int] = None
     notes: Optional[str] = None
@@ -25,6 +25,7 @@ class TaskVariant(TaskVariantBase):
     task_id: int
     embodiment: Optional[EmbodimentInfo] = None
     teleop_mode: Optional[TeleopModeInfo] = None
+    items: Optional[List[TaskVariantItemInfo]] = None
 
     class Config:
         from_attributes = True

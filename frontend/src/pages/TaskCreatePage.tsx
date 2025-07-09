@@ -2,12 +2,22 @@ import React, { useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { useMutation, useQueryClient } from '@tanstack/react-query'
 import axios from 'axios'
+import ItemSelector from '../components/ItemSelector'
+
+interface TaskVariantItemInfo {
+  item_id: number
+  item_name: string
+  quantity: number
+  url?: string
+  images?: string[]
+  notes?: string
+}
 
 interface TaskVariant {
   id: number
   name: string
   description: string | null
-  items: string | null
+  items: TaskVariantItemInfo[] | null
   embodiment_id: number | null
   teleop_mode_id: number | null
   notes: string | null
@@ -36,7 +46,7 @@ const TaskCreatePage: React.FC = () => {
   
   // Default variant state (will be updated after task creation)
   const [defaultVariantDescription, setDefaultVariantDescription] = useState<string>('')
-  const [defaultVariantItems, setDefaultVariantItems] = useState<string>('')
+  const [defaultVariantItems, setDefaultVariantItems] = useState<TaskVariantItemInfo[]>([])
   const [defaultVariantNotes, setDefaultVariantNotes] = useState<string>('')
   
   // Image upload state
@@ -88,7 +98,7 @@ const TaskCreatePage: React.FC = () => {
       }
       
       // If user provided default variant information, update the default variant
-      if (defaultVariantDescription || defaultVariantItems || defaultVariantNotes || imageUris.length > 0) {
+      if (defaultVariantDescription || defaultVariantItems.length > 0 || defaultVariantNotes || imageUris.length > 0) {
         try {
           // Find the default variant (it should be the first one created for this task)
           const variantsResponse = await axios.get(`http://localhost:8000/api/v1/tasks/${createdTask.id}/variants/`)
@@ -97,13 +107,20 @@ const TaskCreatePage: React.FC = () => {
           if (defaultVariant) {
             const updateData: any = {}
             if (defaultVariantDescription) updateData.description = defaultVariantDescription
-            if (defaultVariantItems) updateData.items = defaultVariantItems
             if (defaultVariantNotes) updateData.notes = defaultVariantNotes
             if (imageUris.length > 0) {
               updateData.media = imageUris
             }
             
             await axios.put(`http://localhost:8000/api/v1/tasks/variants/${defaultVariant.id}`, updateData)
+            
+            // Add items to the variant
+            for (const item of defaultVariantItems) {
+              await axios.post(`http://localhost:8000/api/v1/tasks/variants/${defaultVariant.id}/items/`, {
+                item_id: item.item_id,
+                quantity: item.quantity
+              })
+            }
           }
         } catch (error) {
           console.error('Failed to update default variant:', error)
@@ -297,12 +314,9 @@ const TaskCreatePage: React.FC = () => {
             
             <div>
               <label className="block font-semibold mb-1">Items</label>
-              <input
-                type="text"
-                className="w-full border border-border rounded px-3 py-2 bg-background text-white focus:outline-none focus:ring-2 focus:ring-accent"
-                value={defaultVariantItems}
-                onChange={e => setDefaultVariantItems(e.target.value)}
-                placeholder="Enter items (e.g., objects, tools needed)"
+              <ItemSelector
+                selectedItems={defaultVariantItems}
+                onItemsChange={setDefaultVariantItems}
               />
             </div>
             
