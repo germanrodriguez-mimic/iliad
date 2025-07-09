@@ -18,10 +18,12 @@ services:
       - POSTGRES_USER=${POSTGRES_USER}
       - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
       - POSTGRES_DB=${POSTGRES_DB}
+      - GCP_MEDIA_BUCKET_NAME=${GCP_MEDIA_BUCKET_NAME:-mimic-task-images}
     ports:
       - "8000:8000"
     volumes:
       - ./backend:/app
+      - ./service_account.json:/app/service_account.json:ro
     command: uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
     depends_on:
       - cloudsql-proxy

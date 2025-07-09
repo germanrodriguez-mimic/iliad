@@ -7,6 +7,7 @@ class Settings(BaseSettings):
     API_V1_STR: str = "/api/v1"
     
     DATABASE_URL: str
+    GCP_MEDIA_BUCKET_NAME: str
 
     @property
     def get_database_url(self) -> str:

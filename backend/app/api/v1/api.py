@@ -1,6 +1,6 @@
 from fastapi import APIRouter
 
-from app.api.v1.endpoints import tasks, subdatasets, raw_episodes
+from app.api.v1.endpoints import tasks, subdatasets, raw_episodes, upload
 
 api_router = APIRouter()
 
@@ -35,5 +35,16 @@ api_router.include_router(
         404: {"description": "Raw episode not found"},
         400: {"description": "Invalid input"},
         501: {"description": "Not implemented"}
+    }
+)
+
+# Upload endpoints
+api_router.include_router(
+    upload.router,
+    prefix="/upload",
+    tags=["upload"],
+    responses={
+        400: {"description": "Invalid input"},
+        500: {"description": "Upload failed"}
     }
 ) 
