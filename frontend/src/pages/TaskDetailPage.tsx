@@ -2,6 +2,7 @@ import React, { useState } from 'react'
 import { useParams, Link, useNavigate } from 'react-router-dom'
 import { useQuery } from '@tanstack/react-query'
 import axios from 'axios'
+import ConfigurationImages from '../components/ConfigurationImages'
 
 interface TaskVariant {
   id: number
@@ -120,7 +121,7 @@ const TaskDetailPage: React.FC = () => {
                     {variant.teleop_mode && <div className="text-xs text-gray-400">Teleop Mode: {variant.teleop_mode.name}</div>}
                     {variant.notes && <div className="text-xs text-gray-400">Notes: {variant.notes}</div>}
                     {variant.media && variant.media.length > 0 && (
-                      <div className="text-xs text-gray-400 mt-1">Media: {variant.media.map((url, i) => <a key={i} href={url} target="_blank" rel="noopener noreferrer" className="text-accent hover:underline ml-2">Link {i+1}</a>)}</div>
+                      <ConfigurationImages mediaUrls={variant.media} variantId={variant.id} />
                     )}
                   </div>
                 )}

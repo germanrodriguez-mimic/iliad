@@ -80,6 +80,46 @@ class GCSService:
             The generated filename
         """
         return f"{task_id}_{variant_id}_{image_type}{file_extension}"
+    
+    def get_image_as_base64(self, gsutil_uri: str) -> str:
+        """
+        Download an image from Google Cloud Storage and return it as base64-encoded data
+        
+        Args:
+            gsutil_uri: The gsutil URI (e.g., 'gs://bucket-name/filename')
+        
+        Returns:
+            Base64-encoded image data with data URL prefix
+        """
+        import base64
+        
+        # Extract filename from gsutil URI
+        if gsutil_uri.startswith('gs://'):
+            filename = gsutil_uri[5:]  # Remove 'gs://'
+            if '/' in filename:
+                bucket_name, file_path = filename.split('/', 1)
+                
+                try:
+                    # Get the blob
+                    blob = self.bucket.blob(file_path)
+                    
+                    # Download the image data
+                    image_data = blob.download_as_bytes()
+                    
+                    # Get the content type
+                    content_type = blob.content_type or 'image/jpeg'
+                    
+                    # Encode to base64
+                    base64_data = base64.b64encode(image_data).decode('utf-8')
+                    
+                    # Return as data URL
+                    return f"data:{content_type};base64,{base64_data}"
+                    
+                except Exception as e:
+                    print(f"Error downloading image {gsutil_uri}: {str(e)}")
+                    return ""
+        
+        return gsutil_uri  # Return as-is if not a gsutil URI
 
 # Global instance
 gcs_service = GCSService() 

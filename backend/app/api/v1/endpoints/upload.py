@@ -71,4 +71,23 @@ async def upload_task_images(
         
     except Exception as e:
         print(f"Error uploading images: {str(e)}")  # Log the error for debugging
-        raise HTTPException(status_code=500, detail=f"Failed to upload images: {str(e)}") 
+        raise HTTPException(status_code=500, detail=f"Failed to upload images: {str(e)}")
+
+@router.post("/images/base64")
+async def get_images_as_base64(gsutil_uris: List[str]):
+    """
+    Download images from Google Cloud Storage and return them as base64-encoded data
+    """
+    try:
+        base64_images = []
+        for uri in gsutil_uris:
+            base64_data = gcs_service.get_image_as_base64(uri)
+            base64_images.append(base64_data)
+        
+        return {
+            "images": base64_images
+        }
+        
+    except Exception as e:
+        print(f"Error downloading images: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Failed to download images: {str(e)}") 
