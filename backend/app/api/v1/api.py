@@ -1,6 +1,6 @@
 from fastapi import APIRouter
 
-from app.api.v1.endpoints import tasks, subdatasets, raw_episodes, upload, items
+from app.api.v1.endpoints import tasks, subdatasets, raw_episodes, upload, items, embodiments, teleop_modes
 
 api_router = APIRouter()
 
@@ -56,6 +56,28 @@ api_router.include_router(
     tags=["items"],
     responses={
         404: {"description": "Item not found"},
+        400: {"description": "Invalid input"}
+    }
+)
+
+# Embodiments endpoints
+api_router.include_router(
+    embodiments.router,
+    prefix="/embodiments",
+    tags=["embodiments"],
+    responses={
+        404: {"description": "Embodiment not found"},
+        400: {"description": "Invalid input"}
+    }
+)
+
+# Teleop modes endpoints
+api_router.include_router(
+    teleop_modes.router,
+    prefix="/teleop-modes",
+    tags=["teleop-modes"],
+    responses={
+        404: {"description": "Teleop mode not found"},
         400: {"description": "Invalid input"}
     }
 ) 

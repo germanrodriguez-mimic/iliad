@@ -115,13 +115,28 @@ const TaskDetailPage: React.FC = () => {
           <ul className="space-y-2">
             {data.variants.map(variant => (
               <li key={variant.id} className="border border-border rounded p-3 bg-background">
-                <button
-                  className="w-full text-left font-bold flex justify-between items-center hover:text-accent"
-                  onClick={() => setExpandedVariantId(expandedVariantId === variant.id ? null : variant.id)}
-                >
-                  {variant.name}
-                  <span className="ml-2 text-xs">{expandedVariantId === variant.id ? '▲' : '▼'}</span>
-                </button>
+                <div className="flex justify-between items-center">
+                  <button
+                    className="flex-1 text-left font-bold hover:text-accent"
+                    onClick={() => setExpandedVariantId(expandedVariantId === variant.id ? null : variant.id)}
+                  >
+                    {variant.name}
+                  </button>
+                  <div className="flex items-center space-x-2">
+                    <Link
+                      to={`/tasks/variants/${variant.id}/edit`}
+                      className="text-xs text-accent hover:underline"
+                    >
+                      Edit
+                    </Link>
+                    <button
+                      className="text-xs text-gray-400 hover:text-accent"
+                      onClick={() => setExpandedVariantId(expandedVariantId === variant.id ? null : variant.id)}
+                    >
+                      {expandedVariantId === variant.id ? '▲' : '▼'}
+                    </button>
+                  </div>
+                </div>
                 {expandedVariantId === variant.id && (
                   <div className="mt-2 space-y-2">
                     {variant.description && <div className="text-gray-300 text-sm">{variant.description}</div>}

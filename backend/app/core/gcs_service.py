@@ -121,5 +121,37 @@ class GCSService:
         
         return gsutil_uri  # Return as-is if not a gsutil URI
 
+    def delete_image(self, gsutil_uri: str) -> bool:
+        """
+        Delete an image from Google Cloud Storage
+        
+        Args:
+            gsutil_uri: The gsutil URI (e.g., 'gs://bucket-name/filename')
+        
+        Returns:
+            True if the image was deleted successfully, False otherwise
+        """
+        # Extract filename from gsutil URI
+        if gsutil_uri.startswith('gs://'):
+            filename = gsutil_uri[5:]  # Remove 'gs://'
+            if '/' in filename:
+                bucket_name, file_path = filename.split('/', 1)
+                
+                try:
+                    # Get the blob
+                    blob = self.bucket.blob(file_path)
+                    
+                    # Delete the blob
+                    blob.delete()
+                    
+                    print(f"Successfully deleted image: {gsutil_uri}")
+                    return True
+                    
+                except Exception as e:
+                    print(f"Error deleting image {gsutil_uri}: {str(e)}")
+                    return False
+        
+        return False
+
 # Global instance
 gcs_service = GCSService() 

@@ -90,4 +90,29 @@ async def get_images_as_base64(gsutil_uris: List[str]):
         
     except Exception as e:
         print(f"Error downloading images: {str(e)}")
-        raise HTTPException(status_code=500, detail=f"Failed to download images: {str(e)}") 
+        raise HTTPException(status_code=500, detail=f"Failed to download images: {str(e)}")
+
+@router.delete("/images")
+async def delete_task_images(gsutil_uris: List[str]):
+    """
+    Delete images from Google Cloud Storage
+    """
+    try:
+        deleted_count = 0
+        failed_uris = []
+        
+        for uri in gsutil_uris:
+            if gcs_service.delete_image(uri):
+                deleted_count += 1
+            else:
+                failed_uris.append(uri)
+        
+        return {
+            "message": f"Deleted {deleted_count} out of {len(gsutil_uris)} images",
+            "deleted_count": deleted_count,
+            "failed_uris": failed_uris
+        }
+        
+    except Exception as e:
+        print(f"Error deleting images: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Failed to delete images: {str(e)}") 
