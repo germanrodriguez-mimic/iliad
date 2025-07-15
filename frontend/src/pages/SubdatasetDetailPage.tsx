@@ -269,19 +269,33 @@ const SubdatasetDetailPage: React.FC = () => {
                 <ul className="space-y-2 max-h-80 overflow-y-auto pr-2">
                   {processedEpisodes.map(ep => (
                     <li key={ep.id} className="border border-border rounded p-3 bg-background">
-                      {/* Show episode name as clickable link at the top if url exists */}
-                      {ep.url && (
-                        <div className="mb-2">
-                          <a
-                            href={ep.url}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="text-accent hover:underline font-bold"
-                          >
-                            {ep.url.split('/').pop()}
-                          </a>
-                        </div>
-                      )}
+                      {/* Show episode name as clickable link at the top */}
+                      <div className="mb-2">
+                        <button
+                          onClick={async () => {
+                            try {
+                              const viewerUrl = import.meta.env.VITE_EPISODE_VIEWER_URL;
+                              if (viewerUrl) {
+                                const response = await axios.get(`${viewerUrl}?episode_id=${ep.id}`);
+                                // Extract the url from the response and open it
+                                const episodeUrl = response.data.url;
+                                if (episodeUrl) {
+                                  window.location.href = episodeUrl;
+                                } else {
+                                  console.error('No URL found in episode viewer response');
+                                }
+                              } else {
+                                console.error('VITE_EPISODE_VIEWER_URL not configured');
+                              }
+                            } catch (error) {
+                              console.error('Error opening episode viewer:', error);
+                            }
+                          }}
+                          className="text-accent hover:underline font-bold cursor-pointer"
+                        >
+                          {ep.url ? ep.url.split('/').pop() : `Episode ${ep.id}`}
+                        </button>
+                      </div>
                       <div className="flex flex-wrap gap-4 text-xs">
                         <div>
                           <span className="font-bold">Conversion Version:</span>{' '}
@@ -323,17 +337,12 @@ const SubdatasetDetailPage: React.FC = () => {
                 <ul className="space-y-2 max-h-80 overflow-y-auto pr-2">
                   {rawEpisodes.map(ep => (
                     <li key={ep.id} className="border border-border rounded p-3 bg-background">
-                      {/* Show episode name as clickable link at the top if url exists */}
+                      {/* Show episode name as plain text if url exists */}
                       {ep.url && (
                         <div className="mb-2">
-                          <a
-                            href={ep.url}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="text-accent hover:underline font-bold"
-                          >
+                          <span className="font-bold text-gray-200">
                             {ep.url.split('/').pop()}
-                          </a>
+                          </span>
                         </div>
                       )}
                       <div className="flex flex-wrap gap-4 text-xs">
