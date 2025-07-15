@@ -8,28 +8,12 @@ from app.core.config import settings
 class GCSService:
     def __init__(self):
         # Initialize Google Cloud Storage client with service account
-        # Try multiple possible locations for the service account file
-        possible_paths = [
-            os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(__file__)))), 'service_account.json'),  # Project root
-            '/app/service_account.json',  # Docker container path
-            'service_account.json',  # Current directory
-        ]
+        service_account_path = os.getenv('GOOGLE_APPLICATION_CREDENTIALS')
         
-        service_account_path = None
-        for path in possible_paths:
-            if os.path.exists(path):
-                service_account_path = path
-                print(f"Found service account at: {path}")
-                break
-        
-        if service_account_path:
-            credentials = service_account.Credentials.from_service_account_file(service_account_path)
-            self.client = storage.Client(credentials=credentials)
-            print("Using service account credentials")
-        else:
-            # Fallback to default credentials (for local development)
-            self.client = storage.Client()
-            print("Using default credentials")
+        credentials = service_account.Credentials.from_service_account_file(service_account_path)
+        self.client = storage.Client(credentials=credentials)
+        print("Using service account credentials")
+
         
         # Bucket name from settings
         self.bucket_name = settings.GCP_MEDIA_BUCKET_NAME
