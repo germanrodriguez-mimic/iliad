@@ -3,6 +3,7 @@ import { useParams, Link, useNavigate } from 'react-router-dom'
 import { useQuery } from '@tanstack/react-query'
 import axios from 'axios'
 import ConfigurationImages from '../components/ConfigurationImages'
+import { BACKEND_URL } from '../config/api'
 
 interface TaskVariantItemInfo {
   item_id: number
@@ -79,7 +80,7 @@ const TaskDetailPage: React.FC = () => {
   const { data, isLoading, error } = useQuery<TaskDetailSummary>({
     queryKey: ['task-detail', taskId],
     queryFn: async () => {
-      const response = await axios.get(`http://localhost:8000/api/v1/tasks/${taskId}/detail`)
+      const response = await axios.get(`${BACKEND_URL}/api/v1/tasks/${taskId}/detail`)
       return response.data
     },
     enabled: !!taskId

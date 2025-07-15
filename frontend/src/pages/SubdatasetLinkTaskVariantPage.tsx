@@ -3,6 +3,7 @@ import { useParams, useNavigate, Link } from 'react-router-dom'
 import React, { useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import axios from 'axios'
+import { BACKEND_URL } from '../config/api'
 
 interface TaskVariant {
   id: number
@@ -39,7 +40,7 @@ const SubdatasetLinkTaskVariantPage: React.FC = () => {
   const { data: allTasks, isLoading: loadingAllTasks } = useQuery<Task[]>({
     queryKey: ['all-tasks-for-linking'],
     queryFn: async () => {
-      const response = await axios.get('http://localhost:8000/api/v1/tasks/')
+      const response = await axios.get(`${BACKEND_URL}/api/v1/tasks/`)
       return response.data
     },
     enabled: !!subdatasetId,
@@ -49,7 +50,7 @@ const SubdatasetLinkTaskVariantPage: React.FC = () => {
   const { data: linkedTasks, isLoading: loadingLinkedTasks } = useQuery<any>({
     queryKey: ['subdataset-linked-tasks', subdatasetId],
     queryFn: async () => {
-      const response = await axios.get(`http://localhost:8000/api/v1/subdatasets/${subdatasetId}/linked_tasks/`)
+      const response = await axios.get(`${BACKEND_URL}/api/v1/subdatasets/${subdatasetId}/linked_tasks/`)
       return response.data
     },
     enabled: !!subdatasetId
@@ -59,7 +60,7 @@ const SubdatasetLinkTaskVariantPage: React.FC = () => {
   const { data: subdataset, isLoading: loadingSubdataset } = useQuery<SubdatasetDetail>({
     queryKey: ['subdataset-detail', subdatasetId],
     queryFn: async () => {
-      const response = await axios.get(`http://localhost:8000/api/v1/subdatasets/${subdatasetId}`)
+      const response = await axios.get(`${BACKEND_URL}/api/v1/subdatasets/${subdatasetId}`)
       return response.data
     },
     enabled: !!subdatasetId
@@ -73,7 +74,7 @@ const SubdatasetLinkTaskVariantPage: React.FC = () => {
     setLinkError(null)
     setLinkSuccess(null)
     try {
-      await axios.post(`http://localhost:8000/api/v1/subdatasets/${subdatasetId}/link_task_variant/`, {
+      await axios.post(`${BACKEND_URL}/api/v1/subdatasets/${subdatasetId}/link_task_variant/`, {
         task_variant_id: Number(selectedVariantId),
       })
       setLinkSuccess('Successfully linked!')

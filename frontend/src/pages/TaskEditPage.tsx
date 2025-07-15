@@ -2,6 +2,7 @@ import React, { useState } from 'react'
 import { useParams, Link, useNavigate } from 'react-router-dom'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import axios from 'axios'
+import { BACKEND_URL } from '../config/api'
 
 interface TaskVariant {
   id: number
@@ -60,7 +61,7 @@ const TaskEditPage: React.FC = () => {
   const { data, isLoading, error } = useQuery<TaskDetailSummary>({
     queryKey: ['task-detail', taskId],
     queryFn: async () => {
-      const response = await axios.get(`http://localhost:8000/api/v1/tasks/${taskId}/detail`)
+      const response = await axios.get(`${BACKEND_URL}/api/v1/tasks/${taskId}/detail`)
       return response.data
     },
     enabled: !!taskId
@@ -85,7 +86,7 @@ const TaskEditPage: React.FC = () => {
   // Update task mutation
   const updateTaskMutation = useMutation({
     mutationFn: async (updated: { description: string; status: string }) => {
-      await axios.put(`http://localhost:8000/api/v1/tasks/${taskId}`, {
+      await axios.put(`${BACKEND_URL}/api/v1/tasks/${taskId}`, {
         description: updated.description,
         status: updated.status,
       })

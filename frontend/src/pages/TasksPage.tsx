@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef } from 'react'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import axios from 'axios'
 import { Link } from 'react-router-dom'
+import { BACKEND_URL } from '../config/api'
 
 interface TaskList {
   id: number
@@ -98,7 +99,7 @@ function TasksPage() {
   const { data: tasks, isLoading } = useQuery<TaskList[]>({
     queryKey: ['tasks-list'],
     queryFn: async () => {
-      const response = await axios.get('http://localhost:8000/api/v1/tasks/list')
+      const response = await axios.get(`${BACKEND_URL}/api/v1/tasks/list`)
       return response.data
     }
   })
@@ -108,7 +109,7 @@ function TasksPage() {
     queryKey: ['task', expandedTaskId],
     queryFn: async () => {
       if (!expandedTaskId) return null
-      const response = await axios.get(`http://localhost:8000/api/v1/tasks/${expandedTaskId}`)
+      const response = await axios.get(`${BACKEND_URL}/api/v1/tasks/${expandedTaskId}`)
       return response.data
     },
     enabled: !!expandedTaskId
@@ -161,7 +162,7 @@ function TasksPage() {
     const task = tasks?.find(t => t.id === draggedTaskId)
     if (!task || task.status === status) return
     try {
-      await axios.put(`http://localhost:8000/api/v1/tasks/${draggedTaskId}`, { status })
+      await axios.put(`${BACKEND_URL}/api/v1/tasks/${draggedTaskId}`, { status })
       setToast({ message: `Task "${task.name}" moved to "${status}"`, visible: true })
       queryClient.invalidateQueries(['tasks-list'])
     } catch (e) {

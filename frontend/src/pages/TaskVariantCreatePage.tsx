@@ -3,6 +3,7 @@ import { Link, useNavigate } from 'react-router-dom'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import axios from 'axios'
 import ItemSelector from '../components/ItemSelector'
+import { BACKEND_URL } from '../config/api'
 
 interface TaskList {
   id: number
@@ -55,7 +56,7 @@ const TaskVariantCreatePage: React.FC = () => {
   const { data: tasks, isLoading: tasksLoading } = useQuery<TaskList[]>({
     queryKey: ['tasks-list'],
     queryFn: async () => {
-      const response = await axios.get('http://localhost:8000/api/v1/tasks/list')
+      const response = await axios.get(`${BACKEND_URL}/api/v1/tasks/list`)
       return response.data
     }
   })
@@ -65,7 +66,7 @@ const TaskVariantCreatePage: React.FC = () => {
     queryKey: ['task-variants', selectedTaskId],
     queryFn: async () => {
       if (!selectedTaskId) return []
-      const response = await axios.get(`http://localhost:8000/api/v1/tasks/${selectedTaskId}/variants/`)
+      const response = await axios.get(`${BACKEND_URL}/api/v1/tasks/${selectedTaskId}/variants/`)
       return response.data
     },
     enabled: !!selectedTaskId
@@ -74,7 +75,7 @@ const TaskVariantCreatePage: React.FC = () => {
   // Create task variant mutation
   const createVariantMutation = useMutation({
     mutationFn: async (variantData: { name: string; description: string; notes: string; media: string[] }) => {
-      const response = await axios.post(`http://localhost:8000/api/v1/tasks/${selectedTaskId}/variants/`, variantData)
+      const response = await axios.post(`${BACKEND_URL}/api/v1/tasks/${selectedTaskId}/variants/`, variantData)
       return response.data
     },
     onSuccess: async (createdVariant) => {
@@ -94,7 +95,7 @@ const TaskVariantCreatePage: React.FC = () => {
             formData.append('end_image', endConfigImage)
           }
           
-          const uploadResponse = await axios.post('http://localhost:8000/api/v1/upload/images', formData, {
+          const uploadResponse = await axios.post(`${BACKEND_URL}/api/v1/upload/images`, formData, {
             headers: {
               'Content-Type': 'multipart/form-data',
             },
@@ -104,7 +105,7 @@ const TaskVariantCreatePage: React.FC = () => {
           
           // Update the variant with the uploaded image URIs
           if (imageUris.length > 0) {
-            await axios.put(`http://localhost:8000/api/v1/tasks/variants/${createdVariant.id}`, {
+            await axios.put(`${BACKEND_URL}/api/v1/tasks/variants/${createdVariant.id}`, {
               media: imageUris
             })
           }
@@ -115,7 +116,7 @@ const TaskVariantCreatePage: React.FC = () => {
       
       // Add items to the variant
       for (const item of items) {
-        await axios.post(`http://localhost:8000/api/v1/tasks/variants/${createdVariant.id}/items/`, {
+        await axios.post(`${BACKEND_URL}/api/v1/tasks/variants/${createdVariant.id}/items/`, {
           item_id: item.item_id,
           quantity: item.quantity
         })

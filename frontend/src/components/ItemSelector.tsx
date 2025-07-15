@@ -1,6 +1,7 @@
 import React, { useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import axios from 'axios'
+import { BACKEND_URL } from '../config/api'
 
 interface Item {
   id: number
@@ -33,7 +34,7 @@ const ItemSelector: React.FC<ItemSelectorProps> = ({ selectedItems, onItemsChang
   const { data: items, isLoading } = useQuery<Item[]>({
     queryKey: ['items-list'],
     queryFn: async () => {
-      const response = await axios.get('http://localhost:8000/api/v1/items/list')
+      const response = await axios.get(`${BACKEND_URL}/api/v1/items/list`)
       return response.data
     }
   })

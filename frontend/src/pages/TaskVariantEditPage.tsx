@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react'
 import { useParams, Link, useNavigate } from 'react-router-dom'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import axios from 'axios'
+import { BACKEND_URL } from '../config/api'
 
 interface TaskVariantItemInfo {
   item_id: number
@@ -16,7 +17,7 @@ interface TaskVariant {
   embodiment_id: number | null
   teleop_mode_id: number | null
   notes: string | null
-  media: string[]
+  media?: string[]
   items: TaskVariantItemInfo[]
 }
 
@@ -75,7 +76,7 @@ const TaskVariantEditPage: React.FC = () => {
   const { data: variant, isLoading: variantLoading } = useQuery<TaskVariant>({
     queryKey: ['task-variant', variantId],
     queryFn: async () => {
-      const response = await axios.get(`http://localhost:8000/api/v1/tasks/variants/${variantId}`)
+      const response = await axios.get(`${BACKEND_URL}/api/v1/tasks/variants/${variantId}`)
       return response.data
     },
     enabled: !!variantId
@@ -85,7 +86,7 @@ const TaskVariantEditPage: React.FC = () => {
   const { data: task } = useQuery<Task>({
     queryKey: ['task', variant?.task_id],
     queryFn: async () => {
-      const response = await axios.get(`http://localhost:8000/api/v1/tasks/${variant?.task_id}`)
+      const response = await axios.get(`${BACKEND_URL}/api/v1/tasks/${variant?.task_id}`)
       return response.data
     },
     enabled: !!variant?.task_id
@@ -95,7 +96,7 @@ const TaskVariantEditPage: React.FC = () => {
   const { data: embodiments } = useQuery<Embodiment[]>({
     queryKey: ['embodiments'],
     queryFn: async () => {
-      const response = await axios.get('http://localhost:8000/api/v1/embodiments/')
+      const response = await axios.get(`${BACKEND_URL}/api/v1/embodiments/`)
       return response.data
     }
   })
@@ -104,7 +105,7 @@ const TaskVariantEditPage: React.FC = () => {
   const { data: teleopModes } = useQuery<TeleopMode[]>({
     queryKey: ['teleop-modes'],
     queryFn: async () => {
-      const response = await axios.get('http://localhost:8000/api/v1/teleop-modes/')
+      const response = await axios.get(`${BACKEND_URL}/api/v1/teleop-modes/`)
       return response.data
     }
   })
@@ -113,7 +114,7 @@ const TaskVariantEditPage: React.FC = () => {
   const { data: availableItems } = useQuery<Item[]>({
     queryKey: ['items'],
     queryFn: async () => {
-      const response = await axios.get('http://localhost:8000/api/v1/items/')
+      const response = await axios.get(`${BACKEND_URL}/api/v1/items/`)
       return response.data
     }
   })
@@ -123,7 +124,7 @@ const TaskVariantEditPage: React.FC = () => {
     try {
       const gsutilUris = [startImageUri, endImageUri].filter(Boolean)
       if (gsutilUris.length > 0) {
-        const response = await axios.post('http://localhost:8000/api/v1/upload/images/base64', gsutilUris)
+        const response = await axios.post(`${BACKEND_URL}/api/v1/upload/images/base64`, gsutilUris)
         const base64Images = response.data.images
         
         if (startImageUri && base64Images[0]) {
@@ -149,8 +150,8 @@ const TaskVariantEditPage: React.FC = () => {
       setItems(variant.items || [])
 
       // Set existing images
-      const startImage = variant.media.find(url => url.includes(`_${variant.id}_start`))
-      const endImage = variant.media.find(url => url.includes(`_${variant.id}_end`))
+      const startImage = variant.media?.find(url => url.includes(`_${variant.id}_start`))
+      const endImage = variant.media?.find(url => url.includes(`_${variant.id}_end`))
       
       if (startImage) {
         setExistingStartImage(startImage)
@@ -176,7 +177,7 @@ const TaskVariantEditPage: React.FC = () => {
       teleop_mode_id: number | null;
       media: string[];
     }) => {
-      const response = await axios.put(`http://localhost:8000/api/v1/tasks/variants/${variantId}`, variantData)
+      const response = await axios.put(`${BACKEND_URL}/api/v1/tasks/variants/${variantId}`, variantData)
       return response.data
     },
     onSuccess: async (updatedVariant) => {
@@ -193,7 +194,7 @@ const TaskVariantEditPage: React.FC = () => {
           }
 
           if (imagesToDelete.length > 0) {
-            await axios.delete('http://localhost:8000/api/v1/upload/images', {
+            await axios.delete(`${BACKEND_URL}/api/v1/upload/images`, {
               data: imagesToDelete
             })
           }
@@ -212,7 +213,7 @@ const TaskVariantEditPage: React.FC = () => {
               formData.append('end_image', endConfigImage)
             }
             
-            const uploadResponse = await axios.post('http://localhost:8000/api/v1/upload/images', formData, {
+            const uploadResponse = await axios.post(`${BACKEND_URL}/api/v1/upload/images`, formData, {
               headers: {
                 'Content-Type': 'multipart/form-data',
               },
@@ -228,7 +229,7 @@ const TaskVariantEditPage: React.FC = () => {
             ...newImageUris
           ]
 
-          await axios.put(`http://localhost:8000/api/v1/tasks/variants/${variantId}`, {
+          await axios.put(`${BACKEND_URL}/api/v1/tasks/variants/${variantId}`, {
             media: finalMedia
           })
         } catch (error) {
@@ -239,12 +240,12 @@ const TaskVariantEditPage: React.FC = () => {
       // Update items
       // First, remove all existing items
       for (const item of variant?.items || []) {
-        await axios.delete(`http://localhost:8000/api/v1/tasks/variants/${variantId}/items/${item.item_id}`)
+        await axios.delete(`${BACKEND_URL}/api/v1/tasks/variants/${variantId}/items/${item.item_id}`)
       }
 
       // Then add the new items
       for (const item of items) {
-        await axios.post(`http://localhost:8000/api/v1/tasks/variants/${variantId}/items/`, {
+        await axios.post(`${BACKEND_URL}/api/v1/tasks/variants/${variantId}/items/`, {
           item_id: item.item_id,
           quantity: item.quantity
         })

@@ -3,6 +3,7 @@ import { Link, useNavigate } from 'react-router-dom'
 import { useMutation, useQueryClient } from '@tanstack/react-query'
 import axios from 'axios'
 import ItemSelector from '../components/ItemSelector'
+import { BACKEND_URL } from '../config/api'
 
 interface TaskVariantItemInfo {
   item_id: number
@@ -60,7 +61,7 @@ const TaskCreatePage: React.FC = () => {
   // Create task mutation
   const createTaskMutation = useMutation({
     mutationFn: async (taskData: { name: string; description: string; status: string; is_external: boolean }) => {
-      const response = await axios.post('http://localhost:8000/api/v1/tasks/', taskData)
+      const response = await axios.post(`${BACKEND_URL}/api/v1/tasks/`, taskData)
       return response.data
     },
     onSuccess: async (createdTask) => {
@@ -69,7 +70,7 @@ const TaskCreatePage: React.FC = () => {
       if (startConfigImage || endConfigImage) {
         try {
           // Find the default variant to get its ID
-          const variantsResponse = await axios.get(`http://localhost:8000/api/v1/tasks/${createdTask.id}/variants/`)
+          const variantsResponse = await axios.get(`${BACKEND_URL}/api/v1/tasks/${createdTask.id}/variants/`)
           const defaultVariant = variantsResponse.data.find((v: TaskVariant) => v.name === 'default')
           
           if (defaultVariant) {
@@ -84,7 +85,7 @@ const TaskCreatePage: React.FC = () => {
               formData.append('end_image', endConfigImage)
             }
             
-            const uploadResponse = await axios.post('http://localhost:8000/api/v1/upload/images', formData, {
+            const uploadResponse = await axios.post(`${BACKEND_URL}/api/v1/upload/images`, formData, {
               headers: {
                 'Content-Type': 'multipart/form-data',
               },
@@ -101,7 +102,7 @@ const TaskCreatePage: React.FC = () => {
       if (defaultVariantDescription || defaultVariantItems.length > 0 || defaultVariantNotes || imageUris.length > 0) {
         try {
           // Find the default variant (it should be the first one created for this task)
-          const variantsResponse = await axios.get(`http://localhost:8000/api/v1/tasks/${createdTask.id}/variants/`)
+          const variantsResponse = await axios.get(`${BACKEND_URL}/api/v1/tasks/${createdTask.id}/variants/`)
           const defaultVariant = variantsResponse.data.find((v: TaskVariant) => v.name === 'default')
           
           if (defaultVariant) {
@@ -112,11 +113,11 @@ const TaskCreatePage: React.FC = () => {
               updateData.media = imageUris
             }
             
-            await axios.put(`http://localhost:8000/api/v1/tasks/variants/${defaultVariant.id}`, updateData)
+            await axios.put(`${BACKEND_URL}/api/v1/tasks/variants/${defaultVariant.id}`, updateData)
             
             // Add items to the variant
             for (const item of defaultVariantItems) {
-              await axios.post(`http://localhost:8000/api/v1/tasks/variants/${defaultVariant.id}/items/`, {
+              await axios.post(`${BACKEND_URL}/api/v1/tasks/variants/${defaultVariant.id}/items/`, {
                 item_id: item.item_id,
                 quantity: item.quantity
               })

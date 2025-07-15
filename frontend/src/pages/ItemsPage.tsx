@@ -2,6 +2,7 @@ import React, { useState } from 'react'
 import { Link } from 'react-router-dom'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import axios from 'axios'
+import { BACKEND_URL } from '../config/api'
 
 interface Item {
   id: number
@@ -31,7 +32,7 @@ const ItemsPage: React.FC = () => {
   const { data: items, isLoading } = useQuery<Item[]>({
     queryKey: ['items-list'],
     queryFn: async () => {
-      const response = await axios.get('http://localhost:8000/api/v1/items/list')
+      const response = await axios.get(`${BACKEND_URL}/api/v1/items/list`)
       return response.data
     }
   })
@@ -39,7 +40,7 @@ const ItemsPage: React.FC = () => {
   // Create item mutation
   const createItemMutation = useMutation({
     mutationFn: async (itemData: ItemCreate) => {
-      const response = await axios.post('http://localhost:8000/api/v1/items/', itemData)
+      const response = await axios.post(`${BACKEND_URL}/api/v1/items/`, itemData)
       return response.data
     },
     onSuccess: () => {
@@ -52,7 +53,7 @@ const ItemsPage: React.FC = () => {
   // Delete item mutation
   const deleteItemMutation = useMutation({
     mutationFn: async (itemId: number) => {
-      await axios.delete(`http://localhost:8000/api/v1/items/${itemId}`)
+      await axios.delete(`${BACKEND_URL}/api/v1/items/${itemId}`)
     },
     onSuccess: () => {
       queryClient.invalidateQueries(['items-list'])

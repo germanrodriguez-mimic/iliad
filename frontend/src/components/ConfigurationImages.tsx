@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react'
 import axios from 'axios'
+import { BACKEND_URL } from '../config/api'
 
 interface ConfigurationImagesProps {
   mediaUrls: string[]
@@ -23,7 +24,7 @@ const ConfigurationImages: React.FC<ConfigurationImagesProps> = ({ mediaUrls, va
       if (gsutilUris.length > 0) {
         setIsLoading(true)
         try {
-          const response = await axios.post('http://localhost:8000/api/v1/upload/images/base64', gsutilUris)
+          const response = await axios.post(`${BACKEND_URL}/api/v1/upload/images/base64`, gsutilUris)
           const imageMap: { [key: string]: string } = {}
           gsutilUris.forEach((uri, index) => {
             imageMap[uri] = response.data.images[index]

@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef } from 'react'
 import { Link } from 'react-router-dom'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import axios from 'axios'
+import { BACKEND_URL } from '../config/api'
 
 interface EmbodimentInfo {
   id: number
@@ -93,7 +94,7 @@ function SubdatasetsPage() {
   const { data: tasks, isLoading: loadingTasks } = useQuery<Task[]>({
     queryKey: ['tasks-list'],
     queryFn: async () => {
-      const response = await axios.get('http://localhost:8000/api/v1/tasks/')
+      const response = await axios.get(`${BACKEND_URL}/api/v1/tasks/`)
       return response.data
     }
   })
@@ -103,7 +104,7 @@ function SubdatasetsPage() {
     queryKey: ['task-variants', selectedTaskId],
     queryFn: async () => {
       if (!selectedTaskId || selectedTaskId === '-1') return []
-      const response = await axios.get(`http://localhost:8000/api/v1/tasks/${parseInt(selectedTaskId)}/variants/`)
+      const response = await axios.get(`${BACKEND_URL}/api/v1/tasks/${parseInt(selectedTaskId)}/variants/`)
       return response.data
     },
     enabled: !!selectedTaskId && selectedTaskId !== '-1'
@@ -113,7 +114,7 @@ function SubdatasetsPage() {
   const { data: subdatasets, isLoading } = useQuery<SubdatasetList[]>({
     queryKey: ['subdatasets-list', selectedTaskId, selectedVariantId],
     queryFn: async () => {
-      let url = 'http://localhost:8000/api/v1/subdatasets/list'
+      let url = `${BACKEND_URL}/api/v1/subdatasets/list`
       const params: string[] = []
       if (selectedTaskId && selectedTaskId !== '-1') params.push(`task_id=${parseInt(selectedTaskId)}`)
       if (selectedTaskId === '-1') params.push('task_id=-1')
@@ -134,7 +135,7 @@ function SubdatasetsPage() {
     queryKey: ['subdataset', expandedSubdatasetId],
     queryFn: async () => {
       if (!expandedSubdatasetId) return null
-      const response = await axios.get(`http://localhost:8000/api/v1/subdatasets/${expandedSubdatasetId}`)
+      const response = await axios.get(`${BACKEND_URL}/api/v1/subdatasets/${expandedSubdatasetId}`)
       return response.data
     },
     enabled: !!expandedSubdatasetId
@@ -145,7 +146,7 @@ function SubdatasetsPage() {
     queryKey: ['subdataset-linked-tasks', expandedSubdatasetId],
     queryFn: async () => {
       if (!expandedSubdatasetId) return []
-      const response = await axios.get(`http://localhost:8000/api/v1/subdatasets/${expandedSubdatasetId}/linked_tasks/`)
+      const response = await axios.get(`${BACKEND_URL}/api/v1/subdatasets/${expandedSubdatasetId}/linked_tasks/`)
       return response.data
     },
     enabled: !!expandedSubdatasetId
