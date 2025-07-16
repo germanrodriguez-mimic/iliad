@@ -17,7 +17,6 @@ class GCSService:
         
         # Bucket name from settings
         self.bucket_name = settings.GCP_MEDIA_BUCKET_NAME
-        print(f"Using bucket: {self.bucket_name}")
         self.bucket = self.client.bucket(self.bucket_name)
     
     def upload_image(self, image_data: bytes, filename: str, content_type: Optional[str] = None) -> str:

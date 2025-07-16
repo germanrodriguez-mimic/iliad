@@ -1,3 +1,4 @@
+import time
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker, declarative_base
 from sqlalchemy.pool import QueuePool
@@ -46,7 +47,8 @@ def getconn():
             "pg8000",
             user=settings.DB_USER,
             password=settings.DB_PASSWORD,
-            db=settings.DB_NAME,  # Use 'db' as expected by Cloud SQL Connector
+            db=settings.DB_NAME,
+            ip_type=settings.CONNECTION_TYPE,
         )
         logger.debug("Successfully connected to Cloud SQL")
         return conn
@@ -67,7 +69,7 @@ engine = create_engine(
     pool_timeout=settings.DB_POOL_TIMEOUT,
     pool_recycle=settings.DB_POOL_RECYCLE,
     pool_pre_ping=True,  # Verify connections before use
-    echo=False,  # Set to True for SQL query logging
+    echo=False,  # Set to False for production to reduce overhead
 )
 
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)

@@ -11,6 +11,7 @@ class Settings(BaseSettings):
     DB_NAME: str
     DB_USER: str
     DB_PASSWORD: str
+    CONNECTION_TYPE: str
     
     # Connection pool settings for better performance
     DB_POOL_SIZE: int = 10

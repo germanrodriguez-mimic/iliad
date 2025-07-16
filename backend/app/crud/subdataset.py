@@ -1,7 +1,6 @@
 from typing import List, Optional
-from sqlalchemy.orm import Session
+from sqlalchemy.orm import Session, joinedload, selectinload
 from sqlalchemy import and_, func, case
-from sqlalchemy.orm import joinedload
 
 from app.models.subdataset import Subdataset
 from app.models.raw_episode import RawEpisode
@@ -16,6 +15,7 @@ from app.models.tasks_to_subdatasets import TasksToSubdatasets
 from app.models.task import Task
 from app.models.task_variant import TaskVariant
 from app.models.task_variants_to_subdatasets import TaskVariantsToSubdatasets
+from app.core.performance_monitor import query_timer
 
 # Subdataset CRUD operations
 def create_subdataset(db: Session, subdataset: SubdatasetCreate) -> Subdataset:
@@ -57,6 +57,7 @@ def get_subdataset(db: Session, subdataset_id: int) -> Optional[Subdataset]:
     
     return subdataset
 
+@query_timer
 def get_subdatasets(
     db: Session,
     skip: int = 0,
@@ -71,22 +72,14 @@ def get_subdatasets(
         assigned_subdataset_ids = db.query(TaskVariantsToSubdatasets.subdataset_id).distinct()
         query = query.filter(~Subdataset.id.in_(assigned_subdataset_ids))
     elif variant_id is not None:
-        # Filter subdatasets linked to the given variant
-        links = db.query(TaskVariantsToSubdatasets).filter(TaskVariantsToSubdatasets.task_variant_id == variant_id).all()
-        subdataset_ids = [link.subdataset_id for link in links]
-        if not subdataset_ids:
-            return []
-        query = query.filter(Subdataset.id.in_(subdataset_ids))
+        # Filter subdatasets linked to the given variant using JOIN
+        query = query.join(TaskVariantsToSubdatasets, Subdataset.id == TaskVariantsToSubdatasets.subdataset_id)\
+            .filter(TaskVariantsToSubdatasets.task_variant_id == variant_id)
     elif task_id is not None:
-        # Filter subdatasets linked to any variant of the given task
-        variant_ids = [v.id for v in db.query(TaskVariant).filter(TaskVariant.task_id == task_id).all()]
-        if not variant_ids:
-            return []
-        links = db.query(TaskVariantsToSubdatasets).filter(TaskVariantsToSubdatasets.task_variant_id.in_(variant_ids)).all()
-        subdataset_ids = [link.subdataset_id for link in links]
-        if not subdataset_ids:
-            return []
-        query = query.filter(Subdataset.id.in_(subdataset_ids))
+        # Filter subdatasets linked to any variant of the given task using JOINs
+        query = query.join(TaskVariantsToSubdatasets, Subdataset.id == TaskVariantsToSubdatasets.subdataset_id)\
+            .join(TaskVariant, TaskVariantsToSubdatasets.task_variant_id == TaskVariant.id)\
+            .filter(TaskVariant.task_id == task_id)
 
     return query\
         .options(
@@ -203,30 +196,28 @@ def delete_raw_episode(db: Session, raw_episode_id: int) -> bool:
     return True
 
 def get_tasks_and_variants_by_subdataset(db: Session, subdataset_id: int):
-    # Get all task links for this subdataset
-    links = db.query(TasksToSubdatasets).filter(TasksToSubdatasets.subdataset_id == subdataset_id).all()
-    task_ids = [link.task_id for link in links]
-    if not task_ids:
-        return []
-    tasks = db.query(Task).filter(Task.id.in_(task_ids)).all()
-    # Attach variants to each task
-    for task in tasks:
-        task.variants = db.query(TaskVariant).filter(TaskVariant.task_id == task.id).all()
+    # Get all tasks and their variants for this subdataset in optimized queries
+    tasks = db.query(Task)\
+        .join(TasksToSubdatasets, Task.id == TasksToSubdatasets.task_id)\
+        .options(
+            joinedload(Task.variants)
+        )\
+        .filter(TasksToSubdatasets.subdataset_id == subdataset_id)\
+        .all()
+    
     return tasks
 
 def get_linked_task_and_variant_by_subdataset(db: Session, subdataset_id: int):
-    # Find the link in task_variants_to_subdatasets
-    link = db.query(TaskVariantsToSubdatasets).filter(TaskVariantsToSubdatasets.subdataset_id == subdataset_id).first()
-    if not link:
+    # Get the task and variant linked to this subdataset in a single optimized query
+    result = db.query(Task, TaskVariant)\
+        .join(TaskVariant, Task.id == TaskVariant.task_id)\
+        .join(TaskVariantsToSubdatasets, TaskVariant.id == TaskVariantsToSubdatasets.task_variant_id)\
+        .filter(TaskVariantsToSubdatasets.subdataset_id == subdataset_id)\
+        .first()
+    
+    if not result:
         return []
-    # Get the variant
-    variant = db.query(TaskVariant).filter(TaskVariant.id == link.task_variant_id).first()
-    if not variant:
-        return []
-    # Get the task
-    task = db.query(Task).filter(Task.id == variant.task_id).first()
-    if not task:
-        return []
-    # Attach only the linked variant
-    task.variants = [variant]
+    
+    task, variant = result
+    task.variants = [variant]  # Attach only the linked variant
     return [task] 

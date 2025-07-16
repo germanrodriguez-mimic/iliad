@@ -109,6 +109,20 @@ def monitor_performance(operation_type: str = "query"):
         return wrapper
     return decorator
 
+def query_timer(func: Callable) -> Callable:
+    """Simple decorator to time database query functions."""
+    @wraps(func)
+    def wrapper(*args, **kwargs):
+        start_time = time.perf_counter()
+        try:
+            result = func(*args, **kwargs)
+            return result
+        finally:
+            duration = time.perf_counter() - start_time
+            logger.info(f"Query {func.__name__} took {duration:.3f}s")
+            performance_monitor.record_query_time(duration)
+    return wrapper
+
 def get_performance_stats() -> dict:
     """Get current performance statistics."""
     return performance_monitor.get_stats()
