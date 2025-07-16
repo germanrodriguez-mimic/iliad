@@ -35,7 +35,6 @@ connector = create_connector()
 def getconn():
     """
     Get a database connection using Cloud SQL Python Connector.
-    This replaces the proxy-based connection for better performance.
     """
     try:
         logger.debug(f"Connecting to Cloud SQL instance: {settings.CLOUDSQL_INSTANCE}")
