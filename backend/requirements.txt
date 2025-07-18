@@ -1,4 +1,4 @@
-fastapi==0.104.1
+fastapi[all]==0.104.1
 uvicorn==0.24.0
 sqlalchemy==2.0.23
 alembic==1.12.1
@@ -10,3 +10,5 @@ google-cloud-storage==2.10.0
 python-multipart==0.0.6
 cloud-sql-python-connector[pg8000]==1.8.0
 asyncpg==0.29.0 
+authlib
+python-jose

@@ -10,8 +10,10 @@ import TaskVariantEditPage from './pages/TaskVariantEditPage'
 import SubdatasetDetailPage from './pages/SubdatasetDetailPage'
 import SubdatasetLinkTaskVariantPage from './pages/SubdatasetLinkTaskVariantPage'
 import ItemsPage from './pages/ItemsPage'
+import { AuthProvider, useAuth } from './contexts/AuthContext'
+import LoginPage from './pages/LoginPage'
 
-function App() {
+function MainContent() {
   return (
     <div className="min-h-screen bg-background">
       <nav className="fixed w-full z-10 bg-background px-8 py-4">
@@ -45,6 +47,28 @@ function App() {
         </Routes>
       </main>
     </div>
+  )
+}
+
+function AppContent() {
+  const { user, isLoading } = useAuth();
+
+  if (isLoading) {
+    return (
+        <div className="w-full h-screen flex items-center justify-center">
+            <p>Loading...</p>
+        </div>
+    );
+  }
+
+  return user ? <MainContent /> : <LoginPage />;
+}
+
+function App() {
+  return (
+    <AuthProvider>
+      <AppContent/>
+    </AuthProvider>
   )
 }
 
