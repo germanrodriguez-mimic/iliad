@@ -1,4 +1,5 @@
-from fastapi import FastAPI
+from app.core.auth import User, create_access_token, get_current_user, oauth, AuthRequest
+from fastapi import FastAPI, Request, Response, status, HTTPException, Depends
 from fastapi.middleware.cors import CORSMiddleware
 import atexit
 
@@ -78,3 +79,41 @@ async def performance_metrics():
             "pool_recycle": settings.DB_POOL_RECYCLE
         }
     } 
+
+@app.post("/auth/google")
+async def auth_google(auth_req: AuthRequest, request: Request, response: Response):
+    try:
+        # Use the code to fetch token from Google
+        token = await oauth.google.authorize_access_token(request, code=auth_req.code, redirect_uri="postmessage")
+    except Exception as e:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=f"Could not fetch token: {e}")
+
+    user_info = token.get('userinfo')
+    if not user_info:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="No user info in token")
+
+    # ---> THE IMPORTANT PART: Verify the domain <---
+    if user_info.get('hd') != settings.GOOGLE_AUTH_ALLOWED_DOMAINS:
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Access denied. Use your @my-company.com account.")
+
+    user = User(email=user_info.get('email'), name=user_info.get('name'))
+
+    # Create our own JWT and set it in a secure cookie
+    access_token = create_access_token(data={"sub": user.email, "name": user.name})
+    response.set_cookie(
+        key="access_token",
+        value=access_token,
+        httponly=True, # Prevents JS access
+        samesite="lax", # Can be 'strict'
+        secure=False, # Set to True in production (HTTPS)
+    )
+    return {"user": user}
+
+@app.get("/api/users/me", response_model=User)
+async def read_users_me(current_user: User = Depends(get_current_user)):
+    return current_user
+
+@app.post("/auth/logout")
+def logout(response: Response):
+    response.delete_cookie("access_token")
+    return {"message": "Successfully logged out"}
