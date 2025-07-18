@@ -2,7 +2,6 @@
 import { createContext, useState, useEffect, useContext } from 'react';
 import { ReactNode } from 'react'
 import { BACKEND_URL } from '../config/api';
-import { useGoogleLogin } from '@react-oauth/google';
 import axios from 'axios'
 
 axios.defaults.withCredentials = true;
@@ -56,10 +55,9 @@ export function AuthProvider({ children } : AuthProviderProps) {
         window.history.replaceState({}, document.title, window.location.pathname);
     }
 
-  }, []); // This effect runs only once on component mount.
+  }, []);
 
   const loginWithGoogle = async () => {
-    // const redirectUri = BACKEND_URL + "/auth/google/callback";
     const redirectUri = window.location.origin
     window.location.href = `${BACKEND_URL}/auth/login/google?redirect_uri=${encodeURIComponent(redirectUri)}`;
   };

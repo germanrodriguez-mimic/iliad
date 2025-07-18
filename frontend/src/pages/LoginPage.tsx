@@ -9,7 +9,7 @@ function LoginPage() {
             <div className="p-8 bg-white rounded-lg shadow-md text-center">
                 <h1 className="text-2xl font-bold mb-2">Please Log In</h1>
                 <p className="text-gray-600 mb-6">
-                    Sign in with your mimic robotics Google account to continue.
+                    Sign in with your mimic Google account to continue.
                 </p>
                 <button
                     onClick={() => loginWithGoogle()}
