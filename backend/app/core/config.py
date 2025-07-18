@@ -13,11 +13,14 @@ class Settings(BaseSettings):
     DB_PASSWORD: str
     CONNECTION_TYPE: str
     
+    BACKEND_URL: str
+
     # Auth
     GOOGLE_AUTH_CLIENT_ID: str
     GOOGLE_AUTH_CLIENT_SECRET: str
     GOOGLE_AUTH_SECRET_KEY: str
     GOOGLE_AUTH_ALLOWED_DOMAINS: str
+    GOOGLE_AUTH_ALLOWED_ORIGINS: str
 
     # Connection pool settings for better performance
     DB_POOL_SIZE: int = 10

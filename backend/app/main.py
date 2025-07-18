@@ -1,6 +1,9 @@
+from urllib.parse import urlparse
 from app.core.auth import User, create_access_token, get_current_user, oauth, AuthRequest
 from fastapi import FastAPI, Request, Response, status, HTTPException, Depends
+from fastapi.responses import RedirectResponse
 from fastapi.middleware.cors import CORSMiddleware
+from starlette.middleware.sessions import SessionMiddleware
 import atexit
 
 from app.core.config import settings
@@ -17,10 +20,15 @@ app = FastAPI(
 # Configure CORS
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],  # In production, replace with specific origins
+    allow_origins=["http://localhost:5173"],  # In production, replace with specific origins
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
+)
+
+app.add_middleware(
+    SessionMiddleware, 
+    secret_key=settings.GOOGLE_AUTH_SECRET_KEY
 )
 
 # Include API router
@@ -80,34 +88,70 @@ async def performance_metrics():
         }
     } 
 
-@app.post("/auth/google")
-async def auth_google(auth_req: AuthRequest, request: Request, response: Response):
+@app.get("/auth/login/google")
+async def login_google(request: Request):
+    """
+    Generate the Google authorization URL using the request's origin
+    as the redirect URI, after validating it against a whitelist.
+    """
+    allowed_origins = [origin.strip() for origin in settings.GOOGLE_AUTH_ALLOWED_ORIGINS.split(',')]
+
+    redirect_uri = request.query_params.get("redirect_uri")
+    if not redirect_uri:
+        raise HTTPException(status_code=400, detail="Missing redirect_uri")
+
+    request.session["redirect"] = redirect_uri
+
+    allowed_origins = [origin.strip() for origin in settings.GOOGLE_AUTH_ALLOWED_ORIGINS.split(',')]
+    parsed_origin = f"{urlparse(redirect_uri).scheme}://{urlparse(redirect_uri).netloc}"
+
+    # 2. Validate the origin against your whitelist
+    if not parsed_origin or parsed_origin not in allowed_origins:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=f"Origin {parsed_origin} not allowed"
+        )
+
+    return await oauth.google.authorize_redirect(request, f"{settings.BACKEND_URL}/auth/google/callback")
+
+@app.get("/auth/google/callback")
+async def auth_google_callback(request: Request):
+    """
+    This endpoint is hit after the user logs in on Google.
+    It processes the token, creates a session, and redirects to the frontend.
+    """
     try:
-        # Use the code to fetch token from Google
-        token = await oauth.google.authorize_access_token(request, code=auth_req.code, redirect_uri="postmessage")
+        # This now works correctly because the code is in the request's query params
+        token = await oauth.google.authorize_access_token(request)
     except Exception as e:
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=f"Could not fetch token: {e}")
+        raise HTTPException(status_code=400, detail=f"Could not log in: {e}")
 
     user_info = token.get('userinfo')
-    if not user_info:
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="No user info in token")
+    if not user_info or user_info.get('hd') != settings.GOOGLE_AUTH_ALLOWED_DOMAINS:
+        # Redirect to a frontend error page or the login page with an error message
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Domain not allowed"
+        )
 
-    # ---> THE IMPORTANT PART: Verify the domain <---
-    if user_info.get('hd') != settings.GOOGLE_AUTH_ALLOWED_DOMAINS:
-        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Access denied. Use your @my-company.com account.")
-
+    # Create your session cookie
     user = User(email=user_info.get('email'), name=user_info.get('name'))
-
-    # Create our own JWT and set it in a secure cookie
     access_token = create_access_token(data={"sub": user.email, "name": user.name})
+    
+    redirect_destination = request.session.get("redirect")
+
+    # Redirect the user back to the frontend's main page
+    response = RedirectResponse(url=redirect_destination)
     response.set_cookie(
-        key="access_token",
-        value=access_token,
-        httponly=True, # Prevents JS access
-        samesite="lax", # Can be 'strict'
-        secure=False, # Set to True in production (HTTPS)
+        key="access_token", 
+        value=access_token, 
+        httponly=True,
+        samesite="Lax",
+        secure=False,
     )
-    return {"user": user}
+    
+    return response
+
 
 @app.get("/api/users/me", response_model=User)
 async def read_users_me(current_user: User = Depends(get_current_user)):
