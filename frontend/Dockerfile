@@ -1,5 +1,5 @@
 # Use Node.js 20 Alpine as the base image
-FROM node:20-alpine
+FROM node:20-alpine AS builder
 
 # Set working directory
 WORKDIR /app
@@ -13,8 +13,15 @@ RUN npm install
 # Copy the rest of the application
 COPY . .
 
-# Expose Vite dev server port
-EXPOSE 5173
+RUN npm run build
+
+FROM node:20-alpine
+
+WORKDIR /app
+
+COPY --from=builder /app/dist .
+
+RUN npm install -g serve
 
 # Start the development server
-CMD ["npm", "run", "dev", "--", "--host"] 
+CMD ["serve"] 

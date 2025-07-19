@@ -8,12 +8,7 @@ from app.core.config import settings
 class GCSService:
     def __init__(self):
         # Initialize Google Cloud Storage client with service account
-        service_account_path = os.getenv('GOOGLE_APPLICATION_CREDENTIALS')
-        
-        credentials = service_account.Credentials.from_service_account_file(service_account_path)
-        self.client = storage.Client(credentials=credentials)
-        print("Using service account credentials")
-
+        self.client = storage.Client()
         
         # Bucket name from settings
         self.bucket_name = settings.GCP_MEDIA_BUCKET_NAME
